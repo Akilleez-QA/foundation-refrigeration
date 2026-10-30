@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: [self-hosted, linux, main-rig]
+    steps:
+      - uses: actions/checkout@v4
+      - run: uv run --no-project --python 3.12 python -B -m unittest discover -s tests -t .
+      - run: uv run --no-project --python 3.12 python -B -O -m unittest discover -s tests -t .
+
+  gitleaks:
+    runs-on: [self-hosted, linux, main-rig]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        shell: bash
+        run: |
+          args=(git --redact --no-banner --exit-code 1)
+          if [ -f .gitleaks.toml ]; then args+=(--config .gitleaks.toml); fi
+          gitleaks "${args[@]}" .
+
+  manifest:
+    runs-on: [self-hosted, linux, main-rig]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source manifest
+        shell: bash
+        run: |
+          if [ -f tools/build_manifest.py ]; then
+            uv run --no-project --python 3.12 python -B tools/build_manifest.py
+            git diff --exit-code SOURCE-MANIFEST.json
+          fi
