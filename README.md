@@ -47,7 +47,14 @@ python -B tools/build_manifest.py
 
 ## Measured
 
-55 tests pass with `python -B -m unittest discover -s tests -t .` on Python 3.14.8 (normal and `-O`). CI also runs both modes on Python 3.12 and verifies the source manifest.
+At commit `4bd3311b31766c00083c582a8c4f99467501df7f`, on Python 3.14.8:
+
+| Command | Result |
+|---|---|
+| `python -B -m unittest discover -s tests -t .` | 55 tests passed |
+| `python -B -O -m unittest discover -s tests -t .` | 55 tests passed |
+
+CI: local only.
 
 ## Refrigeration invariants
 
@@ -77,7 +84,11 @@ See [docs/README.md](docs/README.md): requirements, architecture, interface cont
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
 
 ## License
 
