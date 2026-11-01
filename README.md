@@ -47,7 +47,16 @@ python -B tools/build_manifest.py
 
 ## Measured
 
-49 tests pass with `python -B -m unittest discover -s tests -t .` on Python 3.14.8 in a fresh clone (normal and `-O`). CI: local only.
+55 tests pass with `python -B -m unittest discover -s tests -t .` on Python 3.14.8 (normal and `-O`). CI also runs both modes on Python 3.12 and verifies the source manifest.
+
+## Refrigeration invariants
+
+`from foundation_refrigeration.invariants import evaluate` provides local Python checks for
+`pressure_relation`, `temperature_relation` and `saturation_temperature`. Each accepts an explicit
+claim and returns `passed`, `reason` and a source-bound `library_version`. Gauge claims require
+an explicit atmosphere; saturation claims use the published tables and their error allowances.
+These are read-only observations. See the [Python interface](docs/icd/icd-cstack.md#python-invariant-interface)
+for claim fields. Received from Endoforge's `tools/invariants/refrigeration.py`; no Endoforge installation is required.
 
 ## Documentation
 
