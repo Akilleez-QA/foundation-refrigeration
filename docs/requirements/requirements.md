@@ -17,3 +17,6 @@ Shall statements for foundation-refrigeration. Verification methods: T test, A a
 | REQ-REF-011 | Every result shall carry `receipt.input_sha256` computed from the request. | The host recomputes it to bind result to request. | T |
 | REQ-REF-012 | The bridge shall run with the Python standard library only, with no network and no caller-controlled paths. | Bounded, reproducible execution. | I |
 | REQ-REF-013 | The bridge shall reject inputs that exceed its frame, depth, node, string or integer limits. | Bounded execution on both sides. | T |
+| REQ-REF-014 | The local Python invariant evaluator shall compare explicit pressure and temperature quantities using eq, lt or gt with a 1e-6 canonical-unit tolerance, requiring an explicit atmosphere for gauge pressure. | Receive domain checks from Endoforge without engine dependencies. | T |
+| REQ-REF-015 | The evaluator shall check saturation temperatures against Foundation tables within table error plus 0.001 K, refusing unsupported fluids, missing blend sides and extrapolation. | Preserve reference-backed claim checking. | T |
+| REQ-REF-016 | The evaluator shall return failures for invalid claims and bind every result to the imported package source and data hashes. | Traceable, read-only local observations. | T |

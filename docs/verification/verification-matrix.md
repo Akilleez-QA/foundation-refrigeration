@@ -17,3 +17,6 @@ Command: `python -B -m unittest discover -s tests -t .` from the repository root
 | REQ-REF-011 | T | tests/test_bridge.py | pass at baseline |
 | REQ-REF-012 | I | inspection of source | pass at baseline |
 | REQ-REF-013 | T | tests/test_bridge.py, tests/test_domain_data.py | pass at baseline |
+| REQ-REF-014 | T | tests/test_invariants.py: pressure relations, atmosphere, temperature scales and order | pass locally, normal and optimized |
+| REQ-REF-015 | T | tests/test_invariants.py: independent CoolProp points, saturation refusals | pass locally, normal and optimized |
+| REQ-REF-016 | T | tests/test_invariants.py: malformed claims, source hashes, unchanged inputs | pass locally, normal and optimized |

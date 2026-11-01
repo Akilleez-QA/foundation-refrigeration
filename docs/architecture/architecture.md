@@ -9,6 +9,7 @@ foundation-refrigeration is one Foundation. A Foundation owns the meaning, data 
 | Component | Path | Role |
 |---|---|---|
 | Domain package | `foundation_refrigeration/` | Pure functions over caller-supplied values |
+| Invariant evaluator | `foundation_refrigeration/invariants.py` | Local Python claim checks using domain units and saturation tables |
 | Bridge | `foundation_refrigeration_bridge/` | Line-delimited JSON-RPC over stdio: `python -B -m foundation_refrigeration_bridge` |
 | Schemas | `foundation_refrigeration_bridge/schemas.py` | Tool inventory and input/output schemas |
 | Manifest tool | `tools/build_manifest.py` | Writes `SOURCE-MANIFEST.json`, prints the three pins |
@@ -34,3 +35,4 @@ Host request → bridge input limits → schema validation → domain function �
 
 - Read-only observations only. A verdict is not an acceptance decision.
 - Standard library only, so the source can be hashed and pinned as a whole.
+- The invariant evaluator is a local Python API, separate from the seven bridge tools. It retains Endoforge's three domain checks without engine imports. It hashes package Python files and data JSON at import to identify the reference library used in every result.
