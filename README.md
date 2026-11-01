@@ -54,7 +54,7 @@ At commit `4bd3311b31766c00083c582a8c4f99467501df7f`, on Python 3.14.8:
 | `python -B -m unittest discover -s tests -t .` | 55 tests passed |
 | `python -B -O -m unittest discover -s tests -t .` | 55 tests passed |
 
-CI: local only.
+CI runs both modes on Python 3.12 and verifies the source manifest.
 
 ## Refrigeration invariants
 
