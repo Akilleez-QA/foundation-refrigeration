@@ -18,7 +18,7 @@
 1. The consumer re-verifies the pins before dispatch and after every accepted response.
 2. Only integers or bounded decimal strings cross the bridge as the schemas state; floats are rejected where the schema says so.
 3. The consumer grants only the `read` effect.
-4. A change to any shipped file changes the manifest pin. The consumer repins in the same change that updates its vendored copy.
+4. A change to any shipped source file outside the root `.github/` tree changes the manifest pin. The consumer repins in the same change that updates its vendored copy.
 
 ## Python invariant interface
 

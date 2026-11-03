@@ -53,12 +53,12 @@ Every new requirement needs a row in the
 
 ## Source and release boundaries
 
-[SOURCE-MANIFEST.json](SOURCE-MANIFEST.json) records shipped-file SHA-256 hashes.
+[SOURCE-MANIFEST.json](SOURCE-MANIFEST.json) records shipped source-file SHA-256 hashes outside the root `.github/` tree.
 [The generator](tools/build_manifest.py) includes new documentation such as this
-file. Regenerate it after every change; never hand-edit hashes. It excludes Git
+file. Regenerate it after every change to covered files; never hand-edit hashes. It excludes the root `.github/` tree, Git
 internals, Python caches and bytecode, itself, and `PR_BODY.md`. Avoid leaving
 scratch files in the tree: other files enter the manifest, and tests compare its
-inventory and hashes exactly. Consumers must repin when shipped files change;
+inventory and hashes exactly. Consumers must repin when covered files change;
 see [configuration management](docs/configuration/configuration-management.md).
 
 Never edit expected test results or weaken checks to obtain a pass. Reference
