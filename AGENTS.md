@@ -17,12 +17,14 @@ checks use the standard library; no package installation is needed for them.
 - `foundation_refrigeration/data/` holds saturation tables, exposure limits,
   taxonomy, process-safety thresholds, and open decisions.
 - `tests/` uses Python's `unittest` runner; `golden/` holds reference points.
-- `tools/` contains manifest and golden-reference generators.
+- `tools/` contains the manifest, golden-reference, trace-check and documentation
+  generators.
 
 Preserve the distinction between observations and acceptance decisions. Results
 do not authorize plant actions, establish compliance, or diagnose readings as
 normal or abnormal. Keep cited exposure limits separate from caller policy set
-points. Preserve Evidence and input hashes, including on bridge errors.
+points. Preserve Evidence on every successful result, and input hashes and the
+boundary on every receipt, including tool errors (which carry empty Evidence).
 
 Read [requirements](docs/requirements/requirements.md),
 [architecture](docs/architecture/architecture.md), and the
@@ -39,6 +41,7 @@ or data changes so their imported hashes match the new library.
 Run from the repository root after edits, in this order:
 
 ```sh
+python -B tools/gen_docs.py
 python -B tools/build_manifest.py
 python -B -m unittest discover -s tests -t .
 python -B -O -m unittest discover -s tests -t .
@@ -48,8 +51,11 @@ CI uses Python 3.12 and runs normal and optimized tests, Gitleaks, and manifest
 regeneration followed by `git diff --exit-code SOURCE-MANIFEST.json`. See
 [the workflow](.github/workflows/ci.yml). Report the commands, Python version,
 exit statuses, failures, and unrun checks; do not report missing checks as passed.
-Every new requirement needs a row in the
-[verification matrix](docs/verification/verification-matrix.md).
+Every new requirement needs an SRS entry, a row in the
+[verification matrix](docs/verification/verification-matrix.md) and an SDD
+allocation; `tools/check_trace.py` (run by `tests/test_docs_trace.py`) fails
+otherwise. Exposure-limit and safety wording must stay consistent with
+[Limitations and safety-relevant use](docs/guides/explanation/limitations.md).
 
 ## Source and release boundaries
 
