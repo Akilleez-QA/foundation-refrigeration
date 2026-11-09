@@ -8,7 +8,7 @@
     "CONTRIBUTING.md": "bd7a4a49d65ba5c35799d769e404c1d83caf5b3741f93b65c1abb77a5e7350ba",
     "LICENSE": "fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0",
     "NOTICE.md": "87aa7e1ea48f15e0c4cc70762b7cfbb2d148789edce643aa91f989625e232219",
-    "README.md": "28dfc4f414943332250720eac6d9829f9a289b8d9a0b5726139ee6759c7c7224",
+    "README.md": "de8d4409da232bde1327f0158556110e51146be18f22464f335390b0c2e2c95f",
     "SECURITY.md": "2c5893f73e8037a46f8760d573f3de916e494d6bf6edb84698488e94e69c8290",
     "SUPPORT.md": "c0eac342d89557cff7c0307713b8c991d5707308f36a159e36e559325173c836",
     "docs/README.md": "b47ca617cc8f6e8aa50556dbe901d52057953082b439b8972e27e28318691c43",
@@ -78,7 +78,7 @@
     "tools/check_trace.py": "cc74793c89e78690eaad29327f4f56382bb3b053eaaafb8bcc01264a328c0395",
     "tools/compute_golden.py": "203cf8b22c7e272c52c18f9347d1bf52d1bed302b8a37fa60a64cf784a938fc3",
     "tools/gen_docs.py": "58d6fe1f9670efb4f9114ed1185f820545b5cd714b487b1bc0ff09a02e7e2dcd",
-    "tools/gen_reports.py": "51e97556b94b4f95fa26b6d075e450938b1cf7f1693afae69affd8f35aed8e2f"
+    "tools/gen_reports.py": "57e8b09dec6cd262b5353e75be16539734f036234b12968704607ac66178b267"
   },
   "schema": "foundation-refrigeration-source-manifest/1",
   "version": "0.1.0"

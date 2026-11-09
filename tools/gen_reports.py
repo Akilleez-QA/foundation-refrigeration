@@ -126,7 +126,7 @@ def write_str(label, commit, dirty, today, runs, trace, gates):
     mapping = requirement_map(trace)
     srs = trace.SRS.read_text()
     gaps = sorted(set(re.findall(r"GAP-REF-\d{3}", srs)))
-    tbd = len(re.findall(r"\bTBD\b", srs))
+    tbd = len(re.findall(r"\bTBD\b(?! / question)", srs))
     lines = source_lines()
     issues = issue_counts()
     merged = gh("pr", "list", "--state", "merged", "--limit", "500", "--json", "number")
