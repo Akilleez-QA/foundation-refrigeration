@@ -245,7 +245,7 @@ Evidence records shall have status `CHECK`, `APPROVED` or `DISPUTED` and a basis
 
 ### REQ-REF-026 — Published exposure-limit content
 
-The Foundation shall hold exactly six published ammonia limits, each with a cited basis, an https URL, a quotation containing the value, retrieval date 2026-10-06 and status CHECK, with the OSHA PEL-TWA of 50 ppm as the only enforceable limit, and shall record ERPG-1/2/3 as an explicit gap with no value.
+The Foundation shall hold exactly six published ammonia limits, each with a cited basis, an https URL, a quotation containing the value, retrieval date 2026-10-06 and status CHECK, with the OSHA PEL-TWA of 50 ppm as the only enforceable limit, shall record ERPG-1/2/3 as an explicit gap with no value, and shall name in its provenance only test files present in the repository.
 
 - Rationale: the most common error in this domain is calling 25 ppm the OSHA limit; the data must make the issuer and legal status explicit.
 - Derivation: `foundation_refrigeration/safety_limits.py`, `foundation_refrigeration/data/exposure-limits.json`
