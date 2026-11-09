@@ -23,13 +23,15 @@ It never writes files, opens network connections or talks to equipment.
 ## How it works
 
 ```mermaid
-flowchart LR
-    P["Producer<br/>script, app or AI agent"] -- "one JSON request per line<br/>on stdin" --> B["Bridge<br/>checks size, numbers<br/>and message shape"]
-    B --> T["Tool<br/>checks its arguments,<br/>looks up and calculates"]
-    T --> D[("Bundled data files<br/>saturation tables, exposure limits,<br/>taxonomy, each with its source")]
-    T --> R["Receipt<br/>result + Evidence +<br/>request hash + boundary"]
-    R -- "one JSON line on stdout" --> P
+flowchart TD
+    P["Producer<br/>script, app or AI agent"] --> B["Bridge<br/>checks the request"]
+    B --> T["Tool<br/>looks up and calculates"]
+    D[("Bundled data files")] --> T
+    T --> R["Receipt<br/>result and Evidence"]
+    R --> P
 ```
+
+The bridge checks each request's size, numbers and message shape. The tool checks its arguments and reads the bundled data files (saturation tables, exposure limits, taxonomy), each with its source. The receipt carries the result, Evidence, the request hash and the boundary flags.
 
 The **bridge** is the small server process your program talks to. It speaks JSON-RPC 2.0 over standard input and output, one message per line. You start it, send `initialize`, then any number of `tools/call` requests, then close stdin. A bad request is refused with a reason; a tool never guesses (for example, it refuses a blend refrigerant until you say whether you mean the bubble or the dew point). All data ships in the repository, so the same request always gets the same answer.
 
