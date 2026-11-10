@@ -4,13 +4,13 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from foundation_refrigeration import __version__, units
 from foundation_refrigeration.tools import COMMON_LIMITATIONS, TOOL_NAMES
 from foundation_refrigeration_bridge import server
 from foundation_refrigeration_bridge.schemas import ASSESSMENTS, tool_definitions
 
+ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "docs/guides/reference/tool-catalog.md"
 DATA = ROOT / "docs/data/reference-data.md"
 COMMAND = "python -B tools/gen_docs.py"

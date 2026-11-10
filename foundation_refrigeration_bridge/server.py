@@ -195,7 +195,7 @@ def encode_response(response):
                 raise WireError(-32002, "Output frame exceeds bridge byte limit; result withheld")
             chunks.append(encoded)
         return b"".join(chunks) + b"\n"
-    except (ValueError, OverflowError, RecursionError) as error:
+    except (ValueError, TypeError, OverflowError, RecursionError) as error:
         code = error.code if isinstance(error, WireError) else -32603
         message = str(error) if isinstance(error, WireError) else "Result cannot be represented; evidence withheld"
         fallback = _error(response.get("id"), code, message)
