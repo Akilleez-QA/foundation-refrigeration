@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-ICD-CSTACK |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-08 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -62,9 +62,13 @@ Numbers on the wire must be integers of at most 15 digits or finite decimal lite
 | Call before `initialize`; second `initialize` | `-32000` | Initialize once | `tests/test_bridge.py::InventoryTests.test_handshake_and_ordering` |
 | Wrong protocol version | `-32001` | Use `foundation-refrigeration-jsonrpc/1` | `tests/test_bridge.py::InventoryTests.test_handshake_and_ordering` |
 | Unknown method; unknown tool | `-32601`; `-32602` | Use a listed method or tool | `tests/test_bridge.py::InventoryTests.test_handshake_and_ordering` |
-| Bad envelope or id | `-32600` | Fix the envelope | none (GAP-REF-003) |
+| Bad envelope or id (batch, extra field, wrong `jsonrpc`, missing method, null, boolean, float or out-of-bounds id) | `-32600`, `id: null` | Fix the envelope | `tests/test_gap_register.py::GapRef003EnvelopeTests.test_gap_ref_003_bad_id_types_are_refused` |
+| `ping` with params other than `{}` | `-32602` | Send `ping` with empty or absent params | `tests/test_gap_register.py::GapRef004PingTests.test_gap_ref_004_ping_with_params_is_refused` |
 | Tool argument, unit, range or fluid problem | Result with `isError: true`, assessment `tool_error`, `receipt.error.code`, empty Evidence | Treat as no result | `tests/test_bridge.py::ReceiptTests.test_tool_errors_are_errors_not_results` |
-| Internal error; unencodable or oversized result | `-32603` or `-32002`; no receipt | Report a problem | none (GAP-REF-001, GAP-REF-002) |
+| Unexpected internal exception | `-32603` "Internal bridge error; no evidence result is available", without the exception text; no receipt; the session continues | Report a problem | `tests/test_gap_register.py::GapRef002InternalErrorTests.test_gap_ref_002_unexpected_exception_becomes_32603` |
+| Result that JSON cannot encode: NaN, Infinity, or a value of a non-JSON type such as a set, bytes or an arbitrary object | `-32603` "Result cannot be represented; evidence withheld" with the request `id`; no receipt; the session continues. Before the 2026-11-10 findings sweep a non-JSON type raised `TypeError`, which `encode_response` did not catch, so the session ended without a reply | Report a problem | `tests/test_gap_register.py::GapRef002InternalErrorTests.test_gap_ref_002_unencodable_result_becomes_32603` |
+| Encoded response over 1 048 576 bytes before the newline | `-32002` "Output frame exceeds bridge byte limit; result withheld" with the request `id`; no receipt; the session continues | Narrow the request | `tests/test_gap_register.py::GapRef001OutputLimitTests.test_gap_ref_001_oversized_response_is_withheld_with_32002` |
+| Broken stdout pipe or other `OSError` on read or write | The session ends with exit 2 | Restart the bridge | `tests/test_gap_register.py::GapRef008OutputPipeTests.test_gap_ref_008_broken_pipe_ends_session_with_exit_2` |
 
 The full code list is in the [tool catalog](../guides/reference/tool-catalog.md#json-rpc-error-codes). A success result is an observation, never an acceptance, approval or determination.
 
@@ -80,7 +84,7 @@ The consumer pins three values:
 
 `tools/build_manifest.py` does not print the inventory digest (the foundation-template generator does); the value comes from the tool catalog or the [version description](../releases/README.md). Current values for main are in the latest generated version description.
 
-Versions: `foundation_refrigeration.__version__`, `schemas.VERSION` and the manifest `version` field are all `0.1.0`. Breaking changes are: any change to the protocol identifier, method set, tool names or order, input or output schemas, receipt schema, or limits. Any change to a covered file changes the manifest pin. The consumer repins in the same change that updates its vendored copy. `tests/test_bridge.py::InventoryTests.test_fixed_seven_tool_inventory` and `tests/test_names_and_manifest.py::ManifestTests.test_source_manifest_is_exact` guard the provider side.
+Versions: `foundation_refrigeration.__version__`, `foundation_refrigeration_bridge.__version__`, `schemas.VERSION` and the manifest `version` field are all `0.1.0`; `tests/test_names_and_manifest.py::ManifestTests.test_version_is_written_identically_everywhere` fails if they differ (REQ-REF-045). Breaking changes are: any change to the protocol identifier, method set, tool names or order, input or output schemas, receipt schema, or limits. Any change to a covered file changes the manifest pin. The consumer repins in the same change that updates its vendored copy. `tests/test_bridge.py::InventoryTests.test_fixed_seven_tool_inventory` and `tests/test_names_and_manifest.py::ManifestTests.test_source_manifest_is_exact` guard the provider side.
 
 ## 6. Security and input bounds
 
@@ -94,10 +98,11 @@ Versions: `foundation_refrigeration.__version__`, `schemas.VERSION` and the mani
 
 | Requirement | Section |
 |---|---|
-| REQ-REF-008 | §5 |
+| REQ-REF-008, REQ-REF-045 | §5 |
 | REQ-REF-009, REQ-REF-010, REQ-REF-011 | §3, §4 |
 | REQ-REF-012, REQ-REF-013 | §2, §6 |
 | REQ-REF-017, REQ-REF-035 | §2, §4 |
+| REQ-REF-038, REQ-REF-039, REQ-REF-040, REQ-REF-041 | §4 |
 | REQ-REF-018 | §5 |
 | REQ-REF-014, REQ-REF-015, REQ-REF-016 | §9 |
 
@@ -127,3 +132,4 @@ Results contain `check`, `passed`, `reason`, `library_version` and, on success, 
 | 1.1 | 2026-11-01 | 4bd3311 | Python invariant interface | PR #3 |
 | 1.2 | 2026-11-04 | f51290c | Manifest excludes the root `.github/` tree | PR #9 |
 | 2.0 | 2026-11-08 | 62764c7 | NASA-standard structure; transport, error, identity and security sections; corrected the claim that `build_manifest.py` prints the inventory digest; added `ping` | PR adding the NASA-standard documentation set |
+| 2.1 | 2026-11-10 | d531cec | `-32603` now also covers results of a non-JSON type (the `encode_response` `TypeError` fix); error rows cite their tests and REQ-REF-038 to REQ-REF-041; version agreement is tested (REQ-REF-045) | PR from the 2026-11-10 family findings sweep |

@@ -152,7 +152,7 @@ Read [Limitations and safety-relevant use](docs/guides/explanation/limitations.m
 
 ## Engineering records
 
-Version 0.1.0, not yet tagged. CI runs the tests on Python 3.12 in normal and optimized (`-O`) mode, checks the source manifest and scans for leaked secrets; the latest [test report](docs/verification/reports/STR-unreleased.md) has per-test results.
+Version 0.1.0, not yet tagged. CI runs the tests on Python 3.12 in normal and optimized (`-O`) mode, checks the source manifest, runs ruff 0.17.0 and scans for leaked secrets; the latest [test report](docs/verification/reports/STR-unreleased.md) has per-test results.
 
 The project also keeps formal engineering records, organized after NASA software documentation guidance. Most readers never need them. The classification, requirements, design, interface, data dictionary, test plan, verification matrix, configuration management and assurance records are listed under [Engineering records](docs/README.md#engineering-records) in the documentation index.
 

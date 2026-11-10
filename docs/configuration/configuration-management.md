@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-SCMP |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-08 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -27,7 +27,7 @@
 | Item | Identity | Control point |
 |---|---|---|
 | Source tree (package, bridge, data, golden, tests, tools, docs, root files) | Commit SHA; per-file SHA-256 in `SOURCE-MANIFEST.json` | Pull request to `main` |
-| Version | SemVer `0.1.0` in `foundation_refrigeration/__init__.py`, `foundation_refrigeration_bridge/schemas.py` (`VERSION`) and the manifest written by `tools/build_manifest.py` | Pull request |
+| Version | SemVer `0.1.0` in `foundation_refrigeration/__init__.py`, `foundation_refrigeration_bridge/__init__.py`, `foundation_refrigeration_bridge/schemas.py` (`VERSION`) and the manifest written by `tools/build_manifest.py`; `tests/test_names_and_manifest.py::ManifestTests.test_version_is_written_identically_everywhere` fails if they differ (REQ-REF-045) | Pull request |
 | Tool inventory | Canonical inventory SHA-256 ([tool catalog](../guides/reference/tool-catalog.md)) | Pull request plus host repin |
 | Data projections | SHA-256 per file ([reference data](../data/reference-data.md)), schema and SemVer `version` inside each file | Pull request |
 | CI and repository automation | `.github/` tree, outside the source manifest | Pull request |
@@ -45,6 +45,7 @@ The full per-file table is `SOURCE-MANIFEST.json` itself. It is regenerated, nev
 - `main` has no branch protection or ruleset at this baseline (`gh api repos/Akilleez-QA/foundation-refrigeration/branches/main/protection` returns 404 "Branch not protected"). The CI workflow runs on every pull request and push to `main`, but merging does not require it to pass. This is risk R-3 in the [SMP](../plan/software-management-plan.md#12-risk-register).
 - After any change to a covered file, run `python -B tools/build_manifest.py` and commit the new `SOURCE-MANIFEST.json`. Consumers repin from its output.
 - `PR_BODY.md` is an uncommitted review handoff, excluded from the manifest and its inventory test.
+- Static analysis: the CI `ruff` job runs `uvx ruff@0.17.0 check .` on every pull request and push to `main`. The ruff version is pinned exactly. The repository has no ruff configuration, so the job applies ruff's default rule set. `ruff check` writes a `.ruff_cache/` directory in the repository root; it is listed in `.gitignore` and excluded from the manifest (§8). Like the other CI jobs, the ruff job is not required for merging while `main` has no branch protection.
 - Secret scanning: CI runs gitleaks on the full history of every push and pull request. Contributors also scan locally before pushing (see [CONTRIBUTING.md](../../CONTRIBUTING.md)); that local step is a convention, not an enforced gate.
 
 ## 4. Status accounting
@@ -81,7 +82,7 @@ Generated files are not edited by hand. No source code is generated (SWE-146 and
 
 ## 8. Plan maintenance
 
-This plan is reviewed in any pull request that changes the CI workflow, the manifest generator, the generated-document tools or the release process. The manifest boundary is enforced in two places that must agree: `tools/build_manifest.py` and `tests/test_names_and_manifest.py`. Both exclude the root `.github/` tree, Git internals, Python caches and bytecode, the manifest itself and `PR_BODY.md`. GitHub automation is therefore outside the source pin, and CI-only changes need no manifest regeneration or consumer repin.
+This plan is reviewed in any pull request that changes the CI workflow, the manifest generator, the generated-document tools or the release process. The manifest boundary is enforced in two places that must agree: `tools/build_manifest.py` and `tests/test_names_and_manifest.py`. Both exclude the root `.github/` tree, Git internals, Python caches and bytecode, the `.ruff_cache/` directory written by `ruff check`, the manifest itself and `PR_BODY.md`. `tests/test_names_and_manifest.py::ManifestTests.test_static_analysis_cache_is_outside_the_manifest` checks the `.ruff_cache/` exclusion, so running ruff before the tests cannot change the manifest inventory. GitHub automation is therefore outside the source pin, and CI-only changes need no manifest regeneration or consumer repin.
 
 ## Change history
 
@@ -91,3 +92,4 @@ This plan is reviewed in any pull request that changes the CI workflow, the mani
 | 1.1 | 2026-11-01 | 4bd3311 | Invariant provenance | PR #3 |
 | 1.2 | 2026-11-04 | f51290c | Manifest excludes the root `.github/` tree | PR #9 |
 | 2.0 | 2026-11-08 | 62764c7 | NASA-standard structure; generated outputs; branch-protection status; secret-scanning claim corrected to what CI enforces | PR adding the NASA-standard documentation set |
+| 2.1 | 2026-11-10 | d531cec | CI `ruff` job (ruff 0.17.0, default rules); `.ruff_cache/` excluded from the manifest; version agreement tested | PR from the 2026-11-10 family findings sweep |

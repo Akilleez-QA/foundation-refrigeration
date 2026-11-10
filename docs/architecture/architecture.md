@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-SDD |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-09 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -88,22 +88,22 @@ sequenceDiagram
 | Component | Path | Responsibility | Inputs → outputs | Requirements |
 |---|---|---|---|---|
 | Bridge entry point | `foundation_refrigeration_bridge/__main__.py` | Disables bytecode writing and starts `server.main` | argv → exit status | REQ-REF-012, REQ-REF-035 |
-| Bridge server | `foundation_refrigeration_bridge/server.py` | Frame decoding and limits, JSON-RPC envelope, handshake, dispatch, response encoding, exit status | stdin lines → stdout lines | REQ-REF-012, REQ-REF-013, REQ-REF-017, REQ-REF-035 |
-| Schemas | `foundation_refrigeration_bridge/schemas.py` | Tool inventory: names, descriptions, closed input and output JSON Schemas, allowed assessments | none → tool definitions | REQ-REF-009, REQ-REF-018 |
-| Tool dispatcher | `foundation_refrigeration/tools.py` | Argument checks, calls into domain modules, builds receipts (`input_sha256`, `boundary`, Evidence, data sources, limitations), maps exceptions to tool errors | tool name and arguments → (isError, assessment, receipt) | REQ-REF-001, REQ-REF-002, REQ-REF-003, REQ-REF-004, REQ-REF-005, REQ-REF-006, REQ-REF-007, REQ-REF-009, REQ-REF-010, REQ-REF-011, REQ-REF-027, REQ-REF-031, REQ-REF-034 |
-| Saturation tables | `foundation_refrigeration/thermo.py` | Loads and validates nine tables at import, resolves fluid names, interpolates and refuses out-of-range or sideless lookups | fluid, temperature or pressure, side → value and side | REQ-REF-001, REQ-REF-002, REQ-REF-019, REQ-REF-020, REQ-REF-021, REQ-REF-036 |
+| Bridge server | `foundation_refrigeration_bridge/server.py` | Frame decoding and limits, JSON-RPC envelope, handshake, dispatch, response encoding, exit status | stdin lines → stdout lines | REQ-REF-012, REQ-REF-013, REQ-REF-017, REQ-REF-035, REQ-REF-038, REQ-REF-039, REQ-REF-040, REQ-REF-041 |
+| Schemas | `foundation_refrigeration_bridge/schemas.py` | Tool inventory: names, descriptions, closed input and output JSON Schemas, allowed assessments | none → tool definitions | REQ-REF-009, REQ-REF-018, REQ-REF-045 |
+| Tool dispatcher | `foundation_refrigeration/tools.py` | Argument checks, calls into domain modules, builds receipts (`input_sha256`, `boundary`, Evidence, data sources, limitations), maps exceptions to tool errors | tool name and arguments → (isError, assessment, receipt) | REQ-REF-001, REQ-REF-002, REQ-REF-003, REQ-REF-004, REQ-REF-005, REQ-REF-006, REQ-REF-007, REQ-REF-009, REQ-REF-010, REQ-REF-011, REQ-REF-027, REQ-REF-031, REQ-REF-034, REQ-REF-044 |
+| Saturation tables | `foundation_refrigeration/thermo.py` | Loads and validates nine tables at import, resolves fluid names, interpolates and refuses out-of-range or sideless lookups | fluid, temperature or pressure, side → value and side | REQ-REF-001, REQ-REF-002, REQ-REF-019, REQ-REF-020, REQ-REF-021, REQ-REF-036, REQ-REF-043 |
 | Units | `foundation_refrigeration/units.py` | Quantity validation, unit constants, pressure and temperature conversion, site atmosphere, unit Evidence | quantities and atmosphere → canonical values | REQ-REF-003, REQ-REF-004, REQ-REF-023, REQ-REF-024 |
 | Evidence | `foundation_refrigeration/evidence.py` | Evidence and basis types, validation, legacy-vocabulary mapping | dicts → Evidence objects and back | REQ-REF-025 |
-| Projection loader | `foundation_refrigeration/projection.py` | Reads a fixed-name JSON file from `data/`, refuses duplicate keys, non-finite numbers and envelope mismatch, returns data and SHA-256 | file name, schema → data, digest | REQ-REF-012, REQ-REF-021 |
-| Exposure limits | `foundation_refrigeration/safety_limits.py` | Published ammonia limits, recorded gaps, policy set-point validation, mislabel detector | projection, caller policy → typed records | REQ-REF-006, REQ-REF-026, REQ-REF-027, REQ-REF-028 |
-| Plant taxonomy | `foundation_refrigeration/plant_model.py` | Canonical kinds, aliases, line-service codes, lineage, legacy-list membership | term → resolution record | REQ-REF-007, REQ-REF-029 |
+| Projection loader | `foundation_refrigeration/projection.py` | Reads a fixed-name JSON file from `data/`, refuses duplicate keys, non-finite numbers and envelope mismatch, returns data and SHA-256 | file name, schema → data, digest | REQ-REF-012, REQ-REF-021, REQ-REF-042 |
+| Exposure limits | `foundation_refrigeration/safety_limits.py` | Published ammonia limits, recorded gaps, policy set-point validation, mislabel detector | projection, caller policy → typed records | REQ-REF-006, REQ-REF-026, REQ-REF-027, REQ-REF-028, REQ-REF-043 |
+| Plant taxonomy | `foundation_refrigeration/plant_model.py` | Canonical kinds, aliases, line-service codes, lineage, legacy-list membership | term → resolution record | REQ-REF-007, REQ-REF-029, REQ-REF-043 |
 | Open decisions | `foundation_refrigeration/decisions.py` | Loads open expert decisions and refuses any that is chosen or not disputed | projection → decision records | REQ-REF-030 |
-| Process-safety screens | `foundation_refrigeration/process_safety.py` | Federal anhydrous-ammonia quantity screen and standard-selection guard (library only) | inventory or selection record → screen record | REQ-REF-032, REQ-REF-033 |
+| Process-safety screens | `foundation_refrigeration/process_safety.py` | Federal anhydrous-ammonia quantity screen and standard-selection guard (library only) | inventory or selection record → screen record | REQ-REF-032, REQ-REF-033, REQ-REF-043 |
 | Invariant evaluator | `foundation_refrigeration/invariants.py` | Local Python claim checks for pressure, temperature and saturation; hashes package Python and data at import | check name, claim → result with `library_version` | REQ-REF-014, REQ-REF-015, REQ-REF-016 |
 | Embedded data | `foundation_refrigeration/data/` | Thirteen JSON projections (nine saturation tables, exposure limits, PSM thresholds, taxonomy, open decisions) | none → data | REQ-REF-021, REQ-REF-022, REQ-REF-026 |
 | Golden reference | `golden/` | Independent CoolProp points and generator off-grid points used only by tests | none → reference points | REQ-REF-020 |
-| Manifest tool | `tools/build_manifest.py` | Writes `SOURCE-MANIFEST.json` and prints file count and manifest SHA-256 | source tree → manifest | REQ-REF-008 |
-| Package version | `foundation_refrigeration/__init__.py` | Holds `__version__` | none → version string | Infrastructure |
+| Manifest tool | `tools/build_manifest.py` | Writes `SOURCE-MANIFEST.json` and prints file count and manifest SHA-256 | source tree → manifest | REQ-REF-008, REQ-REF-045 |
+| Package version | `foundation_refrigeration/__init__.py` | Holds `__version__`, which the bridge, schemas and manifest must repeat exactly | none → version string | REQ-REF-045 |
 | Golden generator | `tools/compute_golden.py` | Regenerates `golden/coolprop-8.0.0-points.json` offline; needs CoolProp 8.0.0 and `--date` | CoolProp → golden JSON | Infrastructure |
 | Documentation tools | `tools/check_trace.py`, `tools/gen_docs.py`, `tools/gen_reports.py` | Trace and link check; generated tool catalog and data provenance; generated test report and version description, whose verdict fails on any failed gate, skip or unrecorded test | docs, tests, schemas, data → checks and generated Markdown | REQ-REF-037 |
 
@@ -127,11 +127,12 @@ sequenceDiagram
 |---|---|---|
 | Malformed, oversized or out-of-profile frame | JSON-RPC error `-32700` or `-32002`; no tool runs | REQ-REF-013 |
 | Line longer than the frame limit, or final line without newline | Error response, then the session closes with exit 2 | REQ-REF-035 |
-| Bad envelope, method, order or tool name | JSON-RPC error `-32600`, `-32601`, `-32602`, `-32000` or `-32001` | REQ-REF-017 |
+| Bad envelope, id, method, params, order or tool name | JSON-RPC error `-32600`, `-32601`, `-32602`, `-32000` or `-32001` | REQ-REF-017, REQ-REF-040, REQ-REF-041 |
 | Bad tool arguments, unit, fluid, side or out-of-range value | Tool error result with code; no Evidence, no data sources | REQ-REF-010 |
-| Unexpected exception in dispatch | `-32603` "Internal bridge error"; no evidence result (untested: GAP-REF-002) | — |
-| Response over 1 MiB or unencodable | Withheld and replaced by `-32002` or `-32603` (untested: GAP-REF-001, GAP-REF-002) | — |
-| Invalid data file | Import fails; the bridge does not start (untested: GAP-REF-006) | — |
+| Unexpected exception in dispatch | `-32603` "Internal bridge error" without the exception text; no evidence result; the session continues | REQ-REF-039 |
+| Response over 1 MiB, or unencodable (NaN, Infinity or a non-JSON type) | Withheld and replaced by `-32002` or `-32603`; the session continues | REQ-REF-038, REQ-REF-039 |
+| Broken stdout pipe or other `OSError` on read or write | The session ends with exit 2 | REQ-REF-035 |
+| Invalid data file | Import fails; the bridge does not start | REQ-REF-042, REQ-REF-043 |
 
 Nothing is retried. Nothing is quarantined, because nothing is written.
 
@@ -170,3 +171,4 @@ Nothing is retried. Nothing is quarantined, because nothing is written.
 | 1.1 | 2026-11-01 | 4bd3311 | Invariant evaluator component | PR #3 |
 | 2.0 | 2026-11-08 | 62764c7 | NASA-standard structure; all modules listed with requirement IDs; process-safety module documented; execution, failure and quality sections | PR adding the NASA-standard documentation set |
 | 2.1 | 2026-11-09 | e58a71c | Documentation tools allocated REQ-REF-037 | PR fixing the 2026-11-09 backfill-review findings |
+| 2.2 | 2026-11-10 | d531cec | REQ-REF-038 to REQ-REF-045 allocated; package version is a component with a requirement; failure table cites requirements for the formerly untested paths | PR from the 2026-11-10 family findings sweep |

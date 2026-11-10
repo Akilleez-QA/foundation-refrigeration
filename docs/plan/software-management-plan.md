@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-SMP |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-08 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -44,7 +44,7 @@ Trunk-based development on `main`. Every change is a pull request with one conce
 | Test runner | `unittest` (standard library), normal and `-O` modes | `.github/workflows/ci.yml` |
 | Environment manager in CI | `astral-sh/setup-uv@v7`, `uv run --no-project --python 3.12` | `.github/workflows/ci.yml` |
 | Secret scan | gitleaks 8.28.0 | `.github/workflows/ci.yml`, `.gitleaks.toml` |
-| Static analysis / type check | None configured | — (risk R-4) |
+| Static analysis / type check | ruff 0.17.0, default rules, in CI; no type checker | `.github/workflows/ci.yml` (risk R-4) |
 | Offline data tools | CoolProp 8.0.0 via `uvx`, only for `tools/compute_golden.py` | [test plan TP-2](../verification/test-plan.md#tp-2--regenerate-the-golden-coolprop-points-manual-offline) |
 | CI | GitHub Actions, `ubuntu-latest` | `.github/workflows/ci.yml` |
 
@@ -66,6 +66,7 @@ There is one maintainer, so there is no organizational independence. Agent revie
 | Tests, optimized | `uv run --no-project --python 3.12 python -B -O -m unittest discover -s tests -t .` | Any failing test with `-O` | CI log; STR |
 | Secret scan | `gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .` | Any default-rule finding in history | CI log; STR test log |
 | Manifest | `uv run --no-project --python 3.12 python -B tools/build_manifest.py` then `git diff --exit-code SOURCE-MANIFEST.json` | Committed manifest differs from the tree | CI log |
+| Static analysis | `uvx ruff@0.17.0 check .` | Any finding under ruff's default rules | CI log |
 | Trace and links | `python -B tools/check_trace.py` (also run by the test suite) | Untraced requirement, missing test, unallocated requirement, dead link | STR; SAR |
 
 ## 7. Security, privacy and secure coding
@@ -118,8 +119,8 @@ Reviewed at every release. Likelihood (L) and consequence (C) are 1–5.
 | R-1 | Cited exposure limits or PSM thresholds change at the source after retrieval (2026-10-06, 2026-10-25), so stored values go stale | 3 | 4 | Retrieval dates and quotations stored with each value; status CHECK; limitations page tells users to re-check the official source; re-check at each release | Open | — |
 | R-2 | Someone uses outputs for a real engineering or life-safety decision | 2 | 5 | Boundary object and limitations in every receipt; limitations page; classification statement; no normal/abnormal or compliance verdicts | Open | — |
 | R-3 | `main` has no branch protection, so a change could merge with failing CI | 2 | 3 | Maintainer merges only after checks pass; CI runs on every PR and push | Open | — |
-| R-4 | No static analysis or type checking is configured | 3 | 2 | Small standard-library code base; closed schemas; full test suite in two modes | Open | — |
-| R-5 | Behaviour without tests (GAP-REF-001 to GAP-REF-008) regresses unnoticed | 2 | 3 | Gaps listed in the SRS; candidates for tests | Open | — |
+| R-4 | No static analysis or type checking is configured | 3 | 2 | CI `ruff` job (ruff 0.17.0, default rules) since 2026-11-10; no type checker; small standard-library code base; closed schemas; full test suite in two modes | Mitigated (static analysis); type checking open | — |
+| R-5 | Behaviour without tests (GAP-REF-001 to GAP-REF-008) regresses unnoticed | 2 | 3 | All eight gaps closed by `tests/test_gap_register.py` (REQ-REF-035, REQ-REF-038 to REQ-REF-044); new gaps are listed in SRS §9 | Closed | — |
 | R-6 | CoolProp mixture models differ from REFPROP or measured data for blends | 3 | 3 | Stated in every table's limitations; tables marked CHECK; no design use claimed | Open | — |
 
 ## 13. Measurement
@@ -139,3 +140,4 @@ The [documentation index](../README.md) lists every control document and guide.
 | Version | Date | Commit | Change | Reviewed in |
 |---|---|---|---|---|
 | 1.0 | 2026-11-08 | 62764c7 | Initial baseline | PR adding the NASA-standard documentation set |
+| 1.1 | 2026-11-10 | d531cec | Static-analysis tool and gate; risks R-4 mitigated and R-5 closed | PR from the 2026-11-10 family findings sweep |

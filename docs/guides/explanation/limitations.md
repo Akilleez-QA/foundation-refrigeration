@@ -87,4 +87,3 @@ The equipment taxonomy and line-service codes were authored from an internal cen
 | No ERPG values | Emergency planning values must come from AIHA | — |
 | Saturation tables are bounded and subcritical | Conditions outside the ranges are refused | — |
 | Blend properties use CoolProp default mixing parameters | Can differ from REFPROP and from manufacturer data | — |
-| Several bridge error paths have no test (GAP-REF-001 to GAP-REF-008) | A regression in those paths might not be caught | — |

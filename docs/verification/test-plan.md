@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-STP |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-09 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -15,14 +15,14 @@
 
 ## 1. Scope and approach
 
-All verification is automated with Python's `unittest`, plus two CI gates (secret scan, manifest check). The executable tests are the procedures: each test's code states its inputs, steps and expected result. This plan gives the commands, environment, pass criteria and the few manual procedures.
+All verification is automated with Python's `unittest`, plus three CI gates (secret scan, manifest check, ruff static analysis). The executable tests are the procedures: each test's code states its inputs, steps and expected result. This plan gives the commands, environment, pass criteria and the few manual procedures.
 
 ## 2. Test levels
 
 | Level | What it covers | Location | Command |
 |---|---|---|---|
 | Unit | Units, Evidence, saturation lookup, data content, taxonomy, process-safety screens, invariant evaluator | `tests/test_evidence_units.py`, `tests/test_thermo.py`, `tests/test_domain_data.py`, `tests/test_process_safety.py`, `tests/test_invariants.py` | `python -B -m unittest discover -s tests -t .` |
-| Integration | Tool dispatch and receipts through `Bridge.dispatch`; frame decoding; `serve` over in-memory streams | `tests/test_bridge.py` | same |
+| Integration | Tool dispatch and receipts through `Bridge.dispatch`; frame decoding; envelope, output-limit, internal-error and broken-pipe paths; projection-loader and load-time data refusals; `serve` over in-memory streams | `tests/test_bridge.py`, `tests/test_gap_register.py` | same |
 | System | The bridge as a real child process (`python -B -m foundation_refrigeration_bridge`) with a two-message session | `tests/test_bridge.py::TransportTests.test_real_process_round_trip_without_options` | same |
 | Configuration | Source manifest equals the tree | `tests/test_names_and_manifest.py` | same |
 | Documentation | Requirement trace, dead links, generated documents current | `tests/test_docs_trace.py` | same |
@@ -40,6 +40,7 @@ There are no performance or load tests.
 | Dependencies | None at test time (standard library only) | `tools/` and `tests/` imports |
 | External services | None. Tests read repository files and start the bridge as a child process | `tests/` |
 | Secret scan | gitleaks 8.28.0, default rules (`.gitleaks.toml` extends the defaults) | `.github/workflows/ci.yml` |
+| Static analysis | ruff 0.17.0 via `uvx`, default rules (no ruff configuration in the repository) | `.github/workflows/ci.yml` |
 
 The CI commands, copied from `.github/workflows/ci.yml`:
 
@@ -47,6 +48,7 @@ The CI commands, copied from `.github/workflows/ci.yml`:
 uv run --no-project --python 3.12 python -B -m unittest discover -s tests -t .
 uv run --no-project --python 3.12 python -B -O -m unittest discover -s tests -t .
 gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .
+uvx ruff@0.17.0 check .
 uv run --no-project --python 3.12 python -B tools/build_manifest.py
 git diff --exit-code SOURCE-MANIFEST.json
 ```
@@ -58,13 +60,14 @@ A change is accepted when, at its head commit:
 1. both unittest commands exit 0 with no failures, errors or skips;
 2. `tools/build_manifest.py` leaves `SOURCE-MANIFEST.json` unchanged;
 3. gitleaks exits 0;
-4. `tests/test_docs_trace.py` passes, so the trace check, link check and generated documents are clean.
+4. `tests/test_docs_trace.py` passes, so the trace check, link check and generated documents are clean;
+5. the CI `ruff` job passes. The generated test report does not run ruff; this criterion is checked in CI only.
 
 There are no known accepted failures.
 
 ## 5. Coverage
 
-Not measured. The project pins no coverage tool and the runtime is standard library only. Known untested code paths are listed as gaps GAP-REF-001 to GAP-REF-008 in the [SRS](../requirements/requirements.md#9-untested-behaviour-gaps). MC/DC is not applicable: the software is not safety-critical (SWE-219 applies only to safety-critical software).
+Not measured. The project pins no coverage tool and the runtime is standard library only. Known untested code paths are listed as gaps in the [SRS](../requirements/requirements.md#9-untested-behaviour-gaps); GAP-REF-001 to GAP-REF-008 are closed by `tests/test_gap_register.py` and none is open. MC/DC is not applicable: the software is not safety-critical (SWE-219 applies only to safety-critical software).
 
 ## 6. Test data and fixtures
 
@@ -124,3 +127,4 @@ See the [verification matrix](verification-matrix.md).
 |---|---|---|---|---|
 | 1.0 | 2026-11-08 | 62764c7 | Initial baseline | PR adding the NASA-standard documentation set |
 | 1.1 | 2026-11-09 | e58a71c | TP-1 pass/fail criteria name the gates, skips and run mismatches that fail the report | PR fixing the 2026-11-09 backfill-review findings |
+| 1.2 | 2026-11-10 | d531cec | CI ruff gate; gap register closed | PR from the 2026-11-10 family findings sweep |
