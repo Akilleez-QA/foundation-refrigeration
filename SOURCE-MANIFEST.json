@@ -67,7 +67,7 @@
     "golden/generator-golden-points.json": "b9027c9c7c1294488a432eb633e301a88cf5ce533b125a151f3bf8adaf4ca141",
     "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "tests/test_bridge.py": "48259e9cc90c6d987689faeeede7888946da64c233efcbf1d312df286a2baf49",
-    "tests/test_docs_trace.py": "d73dc163db828705f094311149063586330d8bb4ce65c0d37db3619e770984fd",
+    "tests/test_docs_trace.py": "ec0eab70daae1a20de5d81eb641a0cd0ce1c19591f47cdcbca80a6c3cdbb62e5",
     "tests/test_domain_data.py": "af000cbdca1ee73fab98648d80dfb68df4f5e7a5b9df103b79d2e9370585e55e",
     "tests/test_evidence_units.py": "f0e39ba4c95ae8fbfc2e7d7bd9c8962dbb1f73ca9fa60f50bf30d1eaf3f73190",
     "tests/test_invariants.py": "1ac4d5acf1d21ab817b5318e09ca6575e3e403051dfd47f6b21d66f51508eabd",
@@ -78,7 +78,7 @@
     "tools/check_trace.py": "9fc9b49252cb8df9cf97e0d8f1008c37704c55072492fdaf3714160709476983",
     "tools/compute_golden.py": "203cf8b22c7e272c52c18f9347d1bf52d1bed302b8a37fa60a64cf784a938fc3",
     "tools/gen_docs.py": "58d6fe1f9670efb4f9114ed1185f820545b5cd714b487b1bc0ff09a02e7e2dcd",
-    "tools/gen_reports.py": "57e8b09dec6cd262b5353e75be16539734f036234b12968704607ac66178b267"
+    "tools/gen_reports.py": "bc1c1f7036c7ffce28d6b8344f6af55eca2d22a0ccdd265ac6669e65fb4f457a"
   },
   "schema": "foundation-refrigeration-source-manifest/1",
   "version": "0.1.0"
