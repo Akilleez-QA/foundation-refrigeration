@@ -95,7 +95,7 @@ def from_celsius(c, unit):
 def atmosphere_at_elevation_kpa(elevation_m):
     lo, hi = ELEVATION_RANGE_M
     if not lo <= elevation_m <= hi:
-        raise UnitError("Elevation outside the supported %g..%g m band" % (lo, hi))
+        raise UnitError(f"Elevation outside the supported {lo:g}..{hi:g} m band")
     return STANDARD_ATMOSPHERE_KPA * (1.0 - 2.25577e-5 * elevation_m) ** 5.25588
 
 
@@ -124,7 +124,7 @@ def read_atmosphere(value):
         kpa = absolute_kpa(number, unit, STANDARD_ATMOSPHERE_KPA)
         lo, hi = MEASURED_ATMOSPHERE_RANGE_KPA
         if not lo <= kpa <= hi:
-            raise UnitError("Measured atmosphere outside the plausible %g..%g kPa band" % (lo, hi))
+            raise UnitError(f"Measured atmosphere outside the plausible {lo:g}..{hi:g} kPa band")
         return kpa, {"basis": "measured", "assumed": False}, ("site_measured_atmosphere",)
     raise UnitError("atmosphere basis must be standard, elevation or measured")
 

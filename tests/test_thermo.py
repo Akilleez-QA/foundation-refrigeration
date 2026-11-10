@@ -1,11 +1,16 @@
 import ast
 import json
-from pathlib import Path
 import unittest
+from itertools import pairwise
+from pathlib import Path
 
 from foundation_refrigeration import thermo, units
 from foundation_refrigeration.projection import DATA_DIR
-from foundation_refrigeration.thermo import ThermoError, saturation_pressure_kpa, saturation_temperature_c
+from foundation_refrigeration.thermo import (
+    ThermoError,
+    saturation_pressure_kpa,
+    saturation_temperature_c,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 GOLDEN_GEN = json.loads((ROOT / "golden/generator-golden-points.json").read_text())
@@ -46,7 +51,7 @@ class ProvenanceTests(unittest.TestCase):
             for node in ast.walk(ast.parse(path.read_text())):
                 if isinstance(node, (ast.List, ast.Tuple)):
                     numbers = [e for e in node.elts if isinstance(e, ast.Constant) and type(e.value) in (int, float)]
-                    self.assertLess(len(numbers), 5, "%s:%d looks like a typed table" % (path.name, node.lineno))
+                    self.assertLess(len(numbers), 5, f"{path.name}:{node.lineno:d} looks like a typed table")
 
 
 class MonotonicityTests(unittest.TestCase):
@@ -54,11 +59,11 @@ class MonotonicityTests(unittest.TestCase):
         for fid, table in thermo.TABLES.items():
             with self.subTest(fluid=fid):
                 ts, pb, pd = table.temperatures_c, table.bubble_kpa, table.dew_kpa
-                self.assertTrue(all(a < b for a, b in zip(ts, ts[1:])))
-                self.assertTrue(all(a < b for a, b in zip(pb, pb[1:])))
-                self.assertTrue(all(a < b for a, b in zip(pd, pd[1:])))
+                self.assertTrue(all(a < b for a, b in pairwise(ts)))
+                self.assertTrue(all(a < b for a, b in pairwise(pb)))
+                self.assertTrue(all(a < b for a, b in pairwise(pd)))
                 if table.is_blend:
-                    self.assertTrue(all(b >= d for b, d in zip(pb, pd)))
+                    self.assertTrue(all(b >= d for b, d in zip(pb, pd, strict=True)))
                 else:
                     self.assertEqual(pb, pd)
 
@@ -66,7 +71,7 @@ class MonotonicityTests(unittest.TestCase):
         for fid in thermo.FLUID_FILES:
             rows = json.loads((DATA_DIR / ("refrigerant-saturation." + fid + ".json")).read_text())["data"]["rows"]
             self.assertTrue(all(r[4] > r[3] for r in rows), fid)
-            self.assertTrue(all(a[3] < b[3] for a, b in zip(rows, rows[1:])), fid)
+            self.assertTrue(all(a[3] < b[3] for a, b in pairwise(rows)), fid)
 
     def test_lookup_is_monotonic_and_inverts(self):
         for fid, table in thermo.TABLES.items():

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 from .evidence import Evidence, EvidenceError, PolicyBasis, evidence_from_dict
 from .projection import load
@@ -11,7 +11,7 @@ SCHEMA = "exposure-limits/1"
 ISSUERS = ("OSHA", "NIOSH", "ACGIH")
 LEGAL_STATUSES = ("enforceable", "recommended", "guideline")
 _PUBLISHED_WORDS = re.compile(r"\b(osha|niosh|acgih|aiha|cal/?osha|pel|rel|tlv|idlh|erpg|stel|twa|legal|"
-                              r"regulatory|regulation|statutory|law|cfr|limit|limits)\b", re.I)
+                              r"regulatory|regulation|statutory|law|cfr|limit|limits)\b", re.IGNORECASE)
 
 
 class SafetyLimitError(ValueError):
@@ -109,8 +109,8 @@ def policy_set_point(value) -> PolicySetPoint:
     return PolicySetPoint(value["label"], ppm, evidence)
 
 
-_OSHA_BEFORE = re.compile(r"OSHA[^.\n]{0,40}\bPEL[^.\n]{0,40}\b25\s*ppm", re.I)
-_OSHA_AFTER = re.compile(r"\b25\s*ppm[^.\n]{0,40}OSHA[^.\n]{0,20}\bPEL", re.I)
+_OSHA_BEFORE = re.compile(r"OSHA[^.\n]{0,40}\bPEL[^.\n]{0,40}\b25\s*ppm", re.IGNORECASE)
+_OSHA_AFTER = re.compile(r"\b25\s*ppm[^.\n]{0,40}OSHA[^.\n]{0,20}\bPEL", re.IGNORECASE)
 
 
 def find_mislabelled_ammonia_limits(text):

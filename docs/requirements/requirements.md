@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-SRS |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-09 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -317,7 +317,7 @@ The open-decision loader shall refuse any decision that is not `DISPUTED`, has a
 
 ### REQ-REF-008 — Source manifest
 
-The Foundation shall publish `SOURCE-MANIFEST.json` with the SHA-256 of every file it ships outside the root `.github/` tree, excluding Git internals, Python caches and bytecode, the manifest itself and `PR_BODY.md`.
+The Foundation shall publish `SOURCE-MANIFEST.json` with the SHA-256 of every file it ships outside the root `.github/` tree, excluding Git internals, Python caches and bytecode, the `.ruff_cache/` directory that `ruff check` writes, the manifest itself and `PR_BODY.md`.
 
 - Rationale: the host pins the manifest before dispatch ([ICD §5](../icd/icd-cstack.md#5-identity-versioning-and-compatibility)).
 - Derivation: `tools/build_manifest.py`, `SOURCE-MANIFEST.json`
@@ -367,7 +367,7 @@ The bridge shall answer `tools/list` and `tools/call` only after a successful `i
 
 ### REQ-REF-035 — Process exit status
 
-The bridge process shall exit 0 when stdin closes after complete frames, and exit 2 after reporting an oversized frame or a final frame without a newline, or when started with any command-line argument.
+The bridge process shall exit 0 when stdin closes after complete frames, and exit 2 after reporting an oversized frame or a final frame without a newline, when reading stdin or writing stdout raises `OSError` (including a broken pipe), or when started with any command-line argument.
 
 - Rationale: the host can tell a clean stop from a refused session ([ICD §4](../icd/icd-cstack.md#4-errors-and-result-semantics)).
 - Derivation: `foundation_refrigeration_bridge/server.py`, `foundation_refrigeration_bridge/__main__.py`
@@ -415,24 +415,104 @@ The evaluator shall return `passed: false` with a reason for unknown checks and 
 - Verification: T
 - Status: Baselined
 
+### REQ-REF-038 — Output frame limit
+
+The bridge shall replace any response whose encoding, before the terminating newline, exceeds 1 048 576 bytes with a `-32002` error "Output frame exceeds bridge byte limit; result withheld" that carries the request `id` and no result, and shall keep the session open.
+
+- Rationale: bounded output on both sides of the interface ([ICD §6](../icd/icd-cstack.md#6-security-and-input-bounds)). Formerly gap GAP-REF-001.
+- Derivation: `foundation_refrigeration_bridge/server.py`
+- Allocated to: SDD §4 (bridge server)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-039 — Internal error containment
+
+The bridge shall answer an unexpected exception raised while handling a request with `-32603` "Internal bridge error; no evidence result is available", without the exception text; shall replace a result that cannot be encoded as JSON (NaN, Infinity, or a value of a non-JSON type such as a set, bytes or an arbitrary object) with `-32603` "Result cannot be represented; evidence withheld"; and shall continue the session after either.
+
+- Rationale: an internal fault must not end the session or leak internal detail, and a partial or non-JSON result must never be sent ([ICD §4](../icd/icd-cstack.md#4-errors-and-result-semantics)). Formerly gap GAP-REF-002.
+- Derivation: `foundation_refrigeration_bridge/server.py`
+- Allocated to: SDD §4 (bridge server)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-040 — Envelope and id validation
+
+The bridge shall refuse with `-32600` and `id: null` a batch or any non-object message; an envelope with a field other than `jsonrpc`, `id`, `method` and `params`; a `jsonrpc` value other than the string `"2.0"`; a missing, empty or non-string `method`; and an `id` that is null, a boolean, a float, an array or object, a string over 128 characters or an integer whose absolute value exceeds 9 007 199 254 740 991.
+
+- Rationale: one request per frame with an id the host can match safely ([ICD §2](../icd/icd-cstack.md#2-interface-type-and-transport)). Formerly gap GAP-REF-003.
+- Derivation: `foundation_refrigeration_bridge/server.py`
+- Allocated to: SDD §4 (bridge server)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-041 — Ping
+
+The bridge shall answer `ping` with absent or empty `params` with the result `{}`, before or after `initialize`, without changing the initialization state, and shall refuse `ping` with any other `params` with `-32602`.
+
+- Rationale: a liveness check the host can send at any time ([ICD §2](../icd/icd-cstack.md#2-interface-type-and-transport)). Formerly gap GAP-REF-004.
+- Derivation: `foundation_refrigeration_bridge/server.py`
+- Allocated to: SDD §4 (bridge server)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-042 — Projection loader refusals
+
+The projection loader shall refuse, with a `ProjectionError`, a name that is not a plain file name (a path separator, a leading dot or a parent reference), a file with a duplicate object key, a NaN or Infinity literal, and an envelope that is not an object with exactly `schema`, `version`, `owner`, `generatedBy` and `data`, whose `schema` equals the expected schema, whose `version` is a `MAJOR.MINOR.PATCH` string and whose `data` is an object.
+
+- Rationale: data files are read only by fixed name and only when they match their declared schema ([ICD §6](../icd/icd-cstack.md#6-security-and-input-bounds)). Formerly gap GAP-REF-005.
+- Derivation: `foundation_refrigeration/projection.py`
+- Allocated to: SDD §4 (projection loader)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-043 — Load-time data validation
+
+The Foundation shall refuse to load a saturation table whose units, row count, row shape, number types, finiteness, strict monotonicity or bubble/dew ordering is invalid (`projection_invalid`); an exposure-limit row that is not a cited published ammonia limit in ppm from a known issuer with a known legal status; a taxonomy whose aliases are not normalised or name an unknown kind, or whose kinds or line-service codes are duplicated or name an unknown parent; and a PSM threshold table whose eCFR quotes do not contain the threshold and comparison, whose evidence is not cited CHECK evidence, or that is not labelled as a screen naming both `osha-psm` and `epa-rmp`.
+
+- Rationale: invalid embedded data must stop the import rather than produce results ([SDD §5](../architecture/architecture.md#5-execution-concept)). Formerly gap GAP-REF-006.
+- Derivation: `foundation_refrigeration/thermo.py`, `foundation_refrigeration/safety_limits.py`, `foundation_refrigeration/plant_model.py`, `foundation_refrigeration/process_safety.py`
+- Allocated to: SDD §4 (saturation tables, exposure limits, plant taxonomy, process-safety screens)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-044 — Issuer, vocabulary and term errors
+
+The `exposure_limits` tool shall return tool error `invalid_issuer` for an issuer that is not one of the listed issuers, and the `resolve_equipment_kind` tool shall return `invalid_vocabulary` for a vocabulary other than `equipment_kind` or `line_service` and `invalid_term` for a term that is not a non-blank string within the vocabulary's length limit; each as a tool error receipt with null result, empty Evidence, `input_sha256` and the boundary.
+
+- Rationale: callers can tell a refused argument from an unresolved term (REQ-REF-010). Formerly gap GAP-REF-007.
+- Derivation: `foundation_refrigeration/tools.py`
+- Allocated to: SDD §4 (tool dispatcher)
+- Verification: T
+- Status: Baselined
+
+### REQ-REF-045 — Single version identity
+
+`foundation_refrigeration.__version__`, `foundation_refrigeration_bridge.__version__`, `schemas.VERSION`, the single `version` value written by `tools/build_manifest.py` and the `version` field of `SOURCE-MANIFEST.json` shall be the same `MAJOR.MINOR.PATCH` string.
+
+- Rationale: the host reads the version from more than one place ([ICD §5](../icd/icd-cstack.md#5-identity-versioning-and-compatibility)). Closes finding F-4.
+- Derivation: `foundation_refrigeration/__init__.py`, `foundation_refrigeration_bridge/__init__.py`, `foundation_refrigeration_bridge/schemas.py`, `tools/build_manifest.py`, `SOURCE-MANIFEST.json`
+- Allocated to: SDD §4 (package version, schemas, manifest tool)
+- Verification: T
+- Status: Baselined
+
 ## 9. Untested behaviour (gaps)
 
-The code does the following, but no test checks it. These are not baselined requirements. Each is a candidate for a test, after which it becomes a requirement. Found by reading the code at the baseline commit and searching `tests/` for the code path.
+Behaviour the code has but no test checks is listed here as a gap; a gap is not a baselined requirement. Once a test checks it, the gap is closed and the behaviour becomes a requirement. The register below was found by reading the code at the baseline commit and searching `tests/` for the code path. All eight gaps were closed by `tests/test_gap_register.py` in the 2026-11-10 findings sweep; no gap is open.
 
-| Gap | Behaviour in code | Where | Missing test |
+| Gap | Behaviour in code | Where | Status |
 |---|---|---|---|
-| GAP-REF-001 | A response larger than 1 048 576 bytes is withheld and replaced by a `-32002` error | `foundation_refrigeration_bridge/server.py` `encode_response` | No test produces an oversized response |
-| GAP-REF-002 | An unexpected exception becomes `-32603` "Internal bridge error"; an unencodable result becomes `-32603` "Result cannot be represented" | `foundation_refrigeration_bridge/server.py` | No test reaches either path |
-| GAP-REF-003 | Batches, extra envelope fields, a wrong `jsonrpc` value and bad `id` types (null, float, over-long string, unsafe integer) are refused with `-32600` | `foundation_refrigeration_bridge/server.py` `Bridge.dispatch` | No test sends these envelopes |
-| GAP-REF-004 | `ping` with empty params returns `{}` | `foundation_refrigeration_bridge/server.py` | No test calls `ping` |
-| GAP-REF-005 | The projection loader refuses path-like names, duplicate keys, NaN or Infinity, and envelope or schema mismatches | `foundation_refrigeration/projection.py` `load` | No test feeds a bad projection |
-| GAP-REF-006 | Load-time validation of saturation rows (`projection_invalid`), exposure-limit rows, taxonomy aliases and parents, and PSM threshold quotes | `foundation_refrigeration/thermo.py`, `safety_limits.py`, `plant_model.py`, `process_safety.py` | Only the shipped, valid data is loaded in tests |
-| GAP-REF-007 | Tool error codes `invalid_issuer`, `invalid_vocabulary` and `invalid_term` | `foundation_refrigeration/tools.py` | No test triggers these codes |
-| GAP-REF-008 | A broken stdout pipe or other `OSError` ends the session with exit 2 | `foundation_refrigeration_bridge/server.py` `serve` | No test closes the output pipe |
+| GAP-REF-001 | A response larger than 1 048 576 bytes is withheld and replaced by a `-32002` error | `foundation_refrigeration_bridge/server.py` `encode_response` | Closed: REQ-REF-038; `GapRef001OutputLimitTests` |
+| GAP-REF-002 | An unexpected exception becomes `-32603` "Internal bridge error"; an unencodable result becomes `-32603` "Result cannot be represented" | `foundation_refrigeration_bridge/server.py` | Closed: REQ-REF-039; `GapRef002InternalErrorTests` (found that a non-JSON type ended the session; fixed) |
+| GAP-REF-003 | Batches, extra envelope fields, a wrong `jsonrpc` value and bad `id` types (null, float, over-long string, unsafe integer) are refused with `-32600` | `foundation_refrigeration_bridge/server.py` `Bridge.dispatch` | Closed: REQ-REF-040; `GapRef003EnvelopeTests` |
+| GAP-REF-004 | `ping` with empty params returns `{}` | `foundation_refrigeration_bridge/server.py` | Closed: REQ-REF-041; `GapRef004PingTests` |
+| GAP-REF-005 | The projection loader refuses path-like names, duplicate keys, NaN or Infinity, and envelope or schema mismatches | `foundation_refrigeration/projection.py` `load` | Closed: REQ-REF-042; `GapRef005ProjectionLoaderTests` |
+| GAP-REF-006 | Load-time validation of saturation rows (`projection_invalid`), exposure-limit rows, taxonomy aliases and parents, and PSM threshold quotes | `foundation_refrigeration/thermo.py`, `safety_limits.py`, `plant_model.py`, `process_safety.py` | Closed: REQ-REF-043; `GapRef006LoadTimeValidationTests` |
+| GAP-REF-007 | Tool error codes `invalid_issuer`, `invalid_vocabulary` and `invalid_term` | `foundation_refrigeration/tools.py` | Closed: REQ-REF-044; `GapRef007ToolErrorCodeTests` |
+| GAP-REF-008 | A broken stdout pipe or other `OSError` ends the session with exit 2 | `foundation_refrigeration_bridge/server.py` `serve` | Closed: REQ-REF-035; `GapRef008OutputPipeTests` |
 
 ## 10. Non-functional requirements
 
-Performance and timing: no requirement. The bridge is sequential and the tests set no timing bound except a 30 s subprocess timeout in `tests/test_bridge.py`. Memory and output size are bounded by REQ-REF-013 and GAP-REF-001.
+Performance and timing: no requirement. The bridge is sequential and the tests set no timing bound except a 30 s subprocess timeout in `tests/test_bridge.py`. Memory and output size are bounded by REQ-REF-013 and REQ-REF-038.
 
 Design constraints: standard library only (REQ-REF-012); no code comments (CONTRIBUTING); no numeric tables in source (REQ-REF-022); GPL-3.0-only.
 
@@ -452,7 +532,7 @@ Test (T): automated `unittest` tests, run by `python -B -m unittest discover -s 
 
 | ID | TBD / question | Owner | Issue |
 |---|---|---|---|
-| — | None. Untested behaviour is listed in §9. | — | — |
+| — | None. No untested-behaviour gap is open (§9). | — | — |
 
 ## Change history
 
@@ -463,3 +543,4 @@ Test (T): automated `unittest` tests, run by `python -B -m unittest discover -s 
 | 1.2 | 2026-11-04 | f51290c | REQ-REF-008 excludes the root `.github/` tree | PR #9 |
 | 2.0 | 2026-11-08 | 62764c7 | NASA-standard record format; REQ-REF-010 corrected to match code; REQ-REF-017 to REQ-REF-036 added for tested behaviour; untested behaviour listed as gaps | PR adding the NASA-standard documentation set |
 | 2.1 | 2026-11-09 | e58a71c | REQ-REF-037 (test report verdict) | PR fixing the 2026-11-09 backfill-review findings |
+| 2.2 | 2026-11-10 | d531cec | REQ-REF-038 to REQ-REF-044 from closed gaps GAP-REF-001 to GAP-REF-007; REQ-REF-035 adds exit 2 on `OSError` (GAP-REF-008); REQ-REF-045 single version identity (F-4); REQ-REF-008 excludes `.ruff_cache/` | PR from the 2026-11-10 family findings sweep |

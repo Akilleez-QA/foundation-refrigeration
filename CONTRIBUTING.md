@@ -25,7 +25,7 @@ python -B -m unittest discover -s tests -t .
 python -B -O -m unittest discover -s tests -t .
 ```
 
-`gen_docs.py` is only needed when schemas, tool code, error codes, limits or data change. `build_manifest.py` is needed after any change outside `.github/`. CI also runs gitleaks over the full history; run `gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .` locally before pushing if you have it. The test suite includes `tests/test_docs_trace.py`, which fails on an untraced requirement, a dead Markdown link or a stale generated page.
+`gen_docs.py` is only needed when schemas, tool code, error codes, limits or data change. `build_manifest.py` is needed after any change outside `.github/`. CI also runs gitleaks over the full history; run `gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .` locally before pushing if you have it. CI also runs `uvx ruff@0.17.0 check .` with ruff's default rules; run it locally to match. The test suite includes `tests/test_docs_trace.py`, which fails on an untraced requirement, a dead Markdown link or a stale generated page.
 
 ## Pull requests and review
 

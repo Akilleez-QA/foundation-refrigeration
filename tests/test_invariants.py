@@ -1,8 +1,8 @@
 import copy
 import hashlib
 import json
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from foundation_refrigeration import invariants
 

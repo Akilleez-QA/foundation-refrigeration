@@ -1,6 +1,7 @@
+import importlib
 import sys
 
 sys.dont_write_bytecode = True
-from .server import main
+main = importlib.import_module(".server", __package__).main
 
 raise SystemExit(main())

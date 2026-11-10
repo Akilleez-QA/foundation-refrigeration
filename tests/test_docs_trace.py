@@ -1,12 +1,12 @@
 import importlib.util
 import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,7 @@ class DocumentationTraceTests(unittest.TestCase):
             for name in [*files, "SOURCE-MANIFEST.json"]:
                 (copy / name).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT / name, copy / name)
-            proc = subprocess.run([sys.executable, "-B", "tools/check_trace.py"], cwd=copy, capture_output=True,
+            proc = subprocess.run([sys.executable, "-B", "tools/check_trace.py"], check=False, cwd=copy, capture_output=True,
                                   text=True, timeout=60)
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
@@ -48,7 +48,7 @@ class DocumentationTraceTests(unittest.TestCase):
         ref = "tests/test_bridge.py::ReceiptTests.test_tool_errors_are_errors_not_results"
 
         def run(optimized, outcome="ok"):
-            command = "python -B%s -m unittest discover -s tests -t ." % (" -O" if optimized else "")
+            command = f'python -B{" -O" if optimized else ""} -m unittest discover -s tests -t .'
             return {"command": command, "returncode": 0, "results": {ref: outcome}, "ran": 1, "seconds": "0.1",
                     "digest": "0" * 64, "tail": "OK"}
 
@@ -75,7 +75,7 @@ class DocumentationTraceTests(unittest.TestCase):
             raise subprocess.CalledProcessError(128, ["git", *args])
 
         environments = (("empty repository", lambda *args: "", reports.source_lines),
-                        ("no git checkout", no_checkout, lambda: {}))
+                        ("no git checkout", no_checkout, dict))
         original = reports.REPORTS, reports.gh, reports.git, reports.source_lines
         try:
             reports.gh = lambda *args: None
@@ -125,7 +125,7 @@ class DocumentationTraceTests(unittest.TestCase):
                 shutil.copyfile(ROOT / name, copy / name)
             out.mkdir()
             env = {**os.environ, "GIT_CEILING_DIRECTORIES": temp, "GIT_DIR": str(Path(temp) / "absent.git")}
-            proc = subprocess.run([sys.executable, "-B", "-c", script, str(out)], cwd=copy, capture_output=True,
+            proc = subprocess.run([sys.executable, "-B", "-c", script, str(out)], check=False, cwd=copy, capture_output=True,
                                   text=True, timeout=60, env=env)
             self.assertFalse((copy / ".git").exists())
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)

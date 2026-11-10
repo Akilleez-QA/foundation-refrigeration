@@ -102,8 +102,8 @@ def _result_schemas():
             "pressure_absolute": quantity(["kPa(a)"]), "temperature": quantity(["degC"]),
             "saturation_at_reading_pressure": obj({"dew_temperature": quantity(["degC"]),
                                                    "bubble_temperature": quantity(["degC"])}),
-            "superheat_style_delta": {**DELTA, "required": DELTA["required"] + ["relation_to_dew"]},
-            "subcooling_style_delta": {**DELTA, "required": DELTA["required"] + ["relation_to_bubble"]},
+            "superheat_style_delta": {**DELTA, "required": [*DELTA["required"], "relation_to_dew"]},
+            "subcooling_style_delta": {**DELTA, "required": [*DELTA["required"], "relation_to_bubble"]},
             "lookup_resolution_k": NUMBER, "atmosphere": ATMOSPHERE_OUT, "atmosphere_used": {"type": "boolean"},
             "observation": TEXT, "not_determined": STRINGS}),
         "exposure_limits": obj({
@@ -197,7 +197,7 @@ def _output(name, result_schema):
                    "evidence": {"type": "array", "maxItems": 0}, "data_sources": {"type": "array", "maxItems": 0},
                    "limitations": {**STRINGS, "minItems": 3, "maxItems": 16}})
     return {"$schema": DRAFT, **obj({
-        "tool": {"const": name}, "assessment": {"enum": ASSESSMENTS[name] + ["tool_error"]},
+        "tool": {"const": name}, "assessment": {"enum": [*ASSESSMENTS[name], "tool_error"]},
         "formal_proof": {"const": False}, "runtime_goal_acceptance": {"const": False},
         "receipt": {"oneOf": [success, failure]}})}
 

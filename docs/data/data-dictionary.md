@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | FREFRIG-DD |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baselined |
 | Owner | Akilleez-QA |
-| Date | 2026-11-08 |
+| Date | 2026-11-10 |
 | Baseline commit | 62764c7526ce2bbf064ccf633d5295f4390fc984 |
 | Applies to | foundation-refrigeration main at baseline commit |
 | Classification | Self-assessed Class E analog; not safety-critical (see SMP §1) |
@@ -123,10 +123,10 @@ None. The bridge reads no configuration file, environment variable or command-li
 | Limit | Value | Enforced in | Test |
 |---|---|---|---|
 | Input frame | 65 536 bytes | `server.decode_frame`, `server.serve` | `tests/test_bridge.py::TransportTests.test_numeric_profile_and_duplicate_keys` |
-| Output frame | 1 048 576 bytes | `server.encode_response` | none (GAP-REF-001) |
+| Output frame | 1 048 576 bytes | `server.encode_response` | `tests/test_gap_register.py::GapRef001OutputLimitTests.test_gap_ref_001_response_at_the_limit_is_sent` (REQ-REF-038) |
 | JSON depth / nodes / string | 32 / 4096 / 1024 characters | `server.decode_frame` | `tests/test_bridge.py::TransportTests.test_numeric_profile_and_duplicate_keys` |
 | Integer digits / number literal | 15 / 24 characters | `server._integer`, `server._decimal` | same |
-| Request id | string ≤ 128 characters or integer with \|id\| ≤ 9 007 199 254 740 991 | `server.Bridge.dispatch` | none (GAP-REF-003) |
+| Request id | string ≤ 128 characters or integer with \|id\| ≤ 9 007 199 254 740 991 | `server.Bridge.dispatch` | `tests/test_gap_register.py::GapRef003EnvelopeTests.test_gap_ref_003_bad_id_types_are_refused`, `tests/test_gap_register.py::GapRef003EnvelopeTests.test_gap_ref_003_bounded_ids_are_accepted` (REQ-REF-040) |
 | Quantity magnitude | ≤ 1e9 | `units.finite_number` | `tests/test_evidence_units.py::UnitTests.test_quantities_need_explicit_units_and_finite_numbers` |
 | Elevation | −500 to 6000 m | `units.atmosphere_at_elevation_kpa` | `tests/test_evidence_units.py::UnitTests.test_site_atmosphere_from_elevation` |
 | Measured atmosphere | 40 to 110 kPa(a) | `units.read_atmosphere` | same |
@@ -139,3 +139,4 @@ None. The bridge reads no configuration file, environment variable or command-li
 | Version | Date | Commit | Change | Reviewed in |
 |---|---|---|---|---|
 | 1.0 | 2026-11-08 | 62764c7 | Initial baseline | PR adding the NASA-standard documentation set |
+| 1.1 | 2026-11-10 | d531cec | Output-frame and request-id limits cite their tests (formerly GAP-REF-001, GAP-REF-003) | PR from the 2026-11-10 family findings sweep |

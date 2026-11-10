@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
+from itertools import pairwise
 
 from .evidence import evidence_from_dict
 from .projection import load
@@ -65,8 +66,8 @@ def _table(fid):
     temps = tuple(float(r[0]) for r in rows)
     bubble = tuple(float(r[1]) for r in rows)
     dew = tuple(float(r[2]) for r in rows)
-    if not (all(a < b for a, b in zip(temps, temps[1:])) and all(a < b for a, b in zip(bubble, bubble[1:]))
-            and all(a < b for a, b in zip(dew, dew[1:])) and min(bubble + dew) > 0):
+    if not (all(a < b for a, b in pairwise(temps)) and all(a < b for a, b in pairwise(bubble))
+            and all(a < b for a, b in pairwise(dew)) and min(bubble + dew) > 0):
         raise ThermoError("projection_invalid", "Saturation projection is not monotonic")
     return SaturationTable(data["id"], data["name"], data["kind"], data["source"], data["edition"],
                            temps[0], temps[-1], float(data["interpolation"]["error_k"]), temps, bubble, dew,
@@ -102,8 +103,7 @@ def _x(t_c):
 def saturation_pressure_kpa(table, t_c, side=None):
     side = _side(table, side)
     if not table.min_c <= t_c <= table.max_c:
-        raise ThermoError("outside_table_range", "Temperature outside the generated table range %.4f..%.4f degC"
-                          % (table.min_c, table.max_c))
+        raise ThermoError("outside_table_range", f"Temperature outside the generated table range {table.min_c:.4f}..{table.max_c:.4f} degC")
     ps = table.bubble_kpa if side == "bubble" else table.dew_kpa
     ts = table.temperatures_c
     for i in range(len(ts) - 1):
@@ -122,8 +122,7 @@ def saturation_temperature_c(table, p_kpa, side=None):
     side = _side(table, side)
     ps = table.bubble_kpa if side == "bubble" else table.dew_kpa
     if not ps[0] <= p_kpa <= ps[-1]:
-        raise ThermoError("outside_table_range", "Pressure outside the generated %s range %.4f..%.4f kPa(a)"
-                          % (side, ps[0], ps[-1]))
+        raise ThermoError("outside_table_range", f"Pressure outside the generated {side} range {ps[0]:.4f}..{ps[-1]:.4f} kPa(a)")
     ts = table.temperatures_c
     y = math.log(p_kpa)
     for i in range(len(ps) - 1):
