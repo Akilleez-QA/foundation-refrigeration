@@ -43,8 +43,7 @@ def _fields(args, required, optional=()):
     keys = set(args)
     missing, extra = set(required) - keys, keys - set(required) - set(optional)
     if missing or extra:
-        raise ToolInputError("invalid_arguments", "Missing fields: %s; unexpected fields: %s"
-                             % (", ".join(sorted(missing)) or "none", ", ".join(sorted(extra)) or "none"))
+        raise ToolInputError("invalid_arguments", f'Missing fields: {", ".join(sorted(missing)) or "none"}; unexpected fields: {", ".join(sorted(extra)) or "none"}')
     return args
 
 
@@ -81,8 +80,8 @@ def saturation_pressure(args):
               "temperature": {"value": units.rounded(t_c, 6), "unit": "degC"},
               "pressure": {"value": units.rounded(kpa, PLACES), "unit": "kPa(a)"},
               "pressure_views": units.pressure_views(kpa, atm, PLACES), "atmosphere": atm_record}
-    evidence = [_ev("saturation table " + table.id, table.evidence)] + _unit_evidence(
-        ["temperature_scales", "psi_definition"] + atm_keys)
+    evidence = [_ev("saturation table " + table.id, table.evidence), *_unit_evidence(
+        ["temperature_scales", "psi_definition", *atm_keys])]
     return "saturation_pressure_observed", result, evidence, [_table_source(table)], [
         "Interpolated between generated rows (ln P against 1/T); error bound covers the lookup only.",
         "Gauge views use the stated atmosphere; a different site atmosphere changes them."]
@@ -100,8 +99,8 @@ def saturation_temperature(args):
               "temperature": {"value": units.rounded(t_c, PLACES), "unit": "degC"},
               "temperature_views": units.temperature_views(t_c, PLACES), "atmosphere": atm_record,
               "atmosphere_used": unit in units.GAUGE_UNITS}
-    evidence = [_ev("saturation table " + table.id, table.evidence)] + _unit_evidence(
-        ["temperature_scales", "psi_definition"] + atm_keys)
+    evidence = [_ev("saturation table " + table.id, table.evidence), *_unit_evidence(
+        ["temperature_scales", "psi_definition", *atm_keys])]
     return "saturation_temperature_observed", result, evidence, [_table_source(table)], [
         "Interpolated between generated rows (ln P against 1/T); error bound covers the lookup only."]
 
@@ -119,7 +118,7 @@ def convert_pressure(args):
               "output": {"value": units.rounded(units.from_absolute_kpa(kpa, args["to_unit"], atm), PLACES),
                          "unit": args["to_unit"]},
               "atmosphere": atm_record, "atmosphere_used": used}
-    return "pressure_converted", result, _unit_evidence(["psi_definition"] + (atm_keys if used else [])), [], [
+    return "pressure_converted", result, _unit_evidence(["psi_definition", *(atm_keys if used else [])]), [], [
         "A gauge value is relative to the stated atmosphere, not always the standard one."]
 
 
@@ -180,8 +179,8 @@ def check_reading_against_saturation(args):
         "not_determined": ["normal operating range", "fault or cause", "sensor accuracy or placement",
                            "whether the pressure and temperature were taken at the same point"],
     }
-    evidence = [_ev("saturation table " + table.id, table.evidence)] + _unit_evidence(
-        ["temperature_scales", "psi_definition"] + atm_keys)
+    evidence = [_ev("saturation table " + table.id, table.evidence), *_unit_evidence(
+        ["temperature_scales", "psi_definition", *atm_keys])]
     return "reading_compared_to_saturation", result, evidence, [_table_source(table)], [
         "Superheat- and subcooling-style deltas are observations, never a diagnosis.",
         "No normal range is applied: the only source range found (an internal application normal-ranges.ts) is UNVERIFIED."]

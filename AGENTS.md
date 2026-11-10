@@ -62,7 +62,8 @@ otherwise. Exposure-limit and safety wording must stay consistent with
 [SOURCE-MANIFEST.json](SOURCE-MANIFEST.json) records shipped source-file SHA-256 hashes outside the root `.github/` tree.
 [The generator](tools/build_manifest.py) includes new documentation such as this
 file. Regenerate it after every change to covered files; never hand-edit hashes. It excludes the root `.github/` tree, Git
-internals, Python caches and bytecode, itself, and `PR_BODY.md`. Avoid leaving
+internals, Python caches and bytecode, the `.ruff_cache/` that `ruff check` writes,
+itself, and `PR_BODY.md`. Avoid leaving
 scratch files in the tree: other files enter the manifest, and tests compare its
 inventory and hashes exactly. Consumers must repin when covered files change;
 see [configuration management](docs/configuration/configuration-management.md).

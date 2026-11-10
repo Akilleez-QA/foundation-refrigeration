@@ -48,7 +48,7 @@ class DocumentationTraceTests(unittest.TestCase):
         ref = "tests/test_bridge.py::ReceiptTests.test_tool_errors_are_errors_not_results"
 
         def run(optimized, outcome="ok"):
-            command = "python -B%s -m unittest discover -s tests -t ." % (" -O" if optimized else "")
+            command = f'python -B{" -O" if optimized else ""} -m unittest discover -s tests -t .'
             return {"command": command, "returncode": 0, "results": {ref: outcome}, "ran": 1, "seconds": "0.1",
                     "digest": "0" * 64, "tail": "OK"}
 
