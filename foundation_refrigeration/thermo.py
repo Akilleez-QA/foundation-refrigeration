@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from itertools import pairwise
-import math
 
 from .evidence import evidence_from_dict
 from .projection import load

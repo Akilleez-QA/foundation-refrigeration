@@ -1,14 +1,20 @@
 import io
 import json
-from pathlib import Path
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 
 from foundation_refrigeration.tools import TOOL_NAMES, run
 from foundation_refrigeration_bridge.schemas import tool_definitions
-from foundation_refrigeration_bridge.server import (MAX_FRAME_BYTES, PROTOCOL, Bridge, decode_frame, serve,
-                                                    WireError)
+from foundation_refrigeration_bridge.server import (
+    MAX_FRAME_BYTES,
+    PROTOCOL,
+    Bridge,
+    WireError,
+    decode_frame,
+    serve,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 INIT = {"jsonrpc": "2.0", "id": "init", "method": "initialize", "params": {"protocolVersion": PROTOCOL}}
@@ -178,14 +184,14 @@ class TransportTests(unittest.TestCase):
         payload = json.dumps(INIT) + "\n" + json.dumps({"jsonrpc": "2.0", "id": "p", "method": "tools/call",
             "params": {"name": "saturation_pressure", "arguments": CASES["saturation_pressure"]}}) + "\n"
         proc = subprocess.run([sys.executable, "-B", *(["-O"] if sys.flags.optimize else []), "-m",
-                               "foundation_refrigeration_bridge"], cwd=ROOT, input=payload.encode(),
+                               "foundation_refrigeration_bridge"], check=False, cwd=ROOT, input=payload.encode(),
                               capture_output=True, timeout=30, env={"PYTHONDONTWRITEBYTECODE": "1", "LANG": "C.UTF-8"})
         self.assertEqual(proc.returncode, 0, proc.stderr)
         views = json.loads(proc.stdout.splitlines()[1])["result"]["structuredContent"]["receipt"]["result"]["pressure_views"]
         psig = next(v["value"] for v in views if v["unit"] == "psig")
         self.assertEqual(round(psig, 2), 33.49)
         refused = subprocess.run([sys.executable, "-B", "-m", "foundation_refrigeration_bridge", "--root", "/"],
-                                 cwd=ROOT, capture_output=True, timeout=30)
+                                 check=False, cwd=ROOT, capture_output=True, timeout=30)
         self.assertEqual(refused.returncode, 2)
 
 

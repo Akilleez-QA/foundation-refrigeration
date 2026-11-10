@@ -8,12 +8,25 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from foundation_refrigeration import plant_model, process_safety, projection, safety_limits, thermo
+from foundation_refrigeration import (
+    plant_model,
+    process_safety,
+    projection,
+    safety_limits,
+    thermo,
+)
 from foundation_refrigeration.projection import ProjectionError
 from foundation_refrigeration.tools import run
 from foundation_refrigeration_bridge import server
-from foundation_refrigeration_bridge.server import (MAX_ID_CHARS, MAX_ID_INTEGER, MAX_OUTPUT_BYTES, PROTOCOL, Bridge,
-                                                    encode_response, serve)
+from foundation_refrigeration_bridge.server import (
+    MAX_ID_CHARS,
+    MAX_ID_INTEGER,
+    MAX_OUTPUT_BYTES,
+    PROTOCOL,
+    Bridge,
+    encode_response,
+    serve,
+)
 
 INIT = {"jsonrpc": "2.0", "id": "init", "method": "initialize", "params": {"protocolVersion": PROTOCOL}}
 CONVERT = {"name": "convert_temperature", "arguments": {"temperature": {"value": 0, "unit": "degC"}, "to_unit": "K"}}

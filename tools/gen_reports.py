@@ -42,14 +42,14 @@ def git(*args):
 def gh(*args):
     if shutil.which("gh") is None:
         return None
-    proc = subprocess.run(["gh", *args], cwd=ROOT, capture_output=True, text=True)
+    proc = subprocess.run(["gh", *args], check=False, cwd=ROOT, capture_output=True, text=True)
     return proc.stdout if proc.returncode == 0 else None
 
 
 def run_suite(optimized):
     command = [sys.executable, "-B", *(["-O"] if optimized else []), "-m", "unittest", "discover", "-s", "tests",
                "-t", ".", "-v"]
-    proc = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
+    proc = subprocess.run(command, check=False, cwd=ROOT, capture_output=True, text=True,
                           env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
     results = {}
     for line in proc.stderr.splitlines():
@@ -57,7 +57,7 @@ def run_suite(optimized):
         if match:
             name, module, cls, outcome = match.groups()
             results[f"tests/{module}.py::{cls}.{name}"] = outcome.split()[0]
-    ran = re.search(r"^Ran (\d+) tests? in ([0-9.]+)s$", proc.stderr, re.M)
+    ran = re.search(r"^Ran (\d+) tests? in ([0-9.]+)s$", proc.stderr, re.MULTILINE)
     display = f'python -B{" -O" if optimized else ""} -m unittest discover -s tests -t .'
     return {"command": display, "returncode": proc.returncode, "results": results,
             "ran": int(ran.group(1)) if ran else 0, "seconds": ran.group(2) if ran else "unknown",
@@ -168,23 +168,23 @@ def write_str(label, commit, dirty, today, runs, trace, gates):
     out = header(f"FREFRIG-STR-{label.upper()}", f"software test report {label}", commit, label, today)
     out += ["## 1. Summary", "",
             f"- Conclusion: {conclusion}.",
-            f"- Remaining deficiencies and limitations: {len(gaps):d} untested behaviours are listed as gaps in the "
+            (f"- Remaining deficiencies and limitations: {len(gaps):d} untested behaviours are listed as gaps in the "
             f"[requirements](../../requirements/requirements.md#9-untested-behaviour-gaps) ({gap_ids}). No test "
-            "exercises a live host; the Cstack side of the interface is verified in the Cstack repository.",
-            "- Test-environment impact: tests read only files in the repository and start the bridge as a child "
-            "process. No network or external service is used.", "",
+            "exercises a live host; the Cstack side of the interface is verified in the Cstack repository."),
+            ("- Test-environment impact: tests read only files in the repository and start the bridge as a child "
+            "process. No network or external service is used."), "",
             "## 2. Test log", "", "| Item | Value |", "|---|---|",
             f'| Commit | `{commit}`{" (working tree had uncommitted changes)" if dirty else ""} |',
-            f'| Date (UTC) | {datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M")} |',
+            f'| Date (UTC) | {datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M")} |',
             f"| Environment | {platform.system()} {platform.machine()}, CPython {platform.python_version()} |",
             "| Run by | operator, `tools/gen_reports.py` (local run, not CI) |"]
     for run in runs:
         out.append(f'| `{run["command"]}` | exit {run["returncode"]:d}, {run["tail"]}; {run["ran"]:d} tests in '
                    f'{run["seconds"]} s; stderr SHA-256 `{run["digest"]}` |')
-    out += [f'| `python -B tools/check_trace.py` | {len(problems):d} problem(s); {summary["requirements"]:d} '
+    out += [(f'| `python -B tools/check_trace.py` | {len(problems):d} problem(s); {summary["requirements"]:d} '
             f'requirements, {summary["traced"]:d} traced; {summary["tests"]:d} tests, {summary["tests_traced"]:d} '
             f'traced, {summary["tests_supporting"]:d} supporting; {summary["markdown_files"]:d} markdown files '
-            "link-checked |"]
+            "link-checked |")]
     for name, status, detail in gates:
         out.append(f"| {name} | {status}: {detail} |")
     out += ["", "## 3. Results", "", "| Test | Requirements | Normal | Optimized (-O) |", "|---|---|---|---|"]
@@ -208,8 +208,8 @@ def write_str(label, commit, dirty, today, runs, trace, gates):
     out += ["", "## 5. Metrics", "", "| Measure | Value | Command |", "|---|---|---|",
             *(f"| Tests run / passed / failed ({name}) | {ran:d} / {ok:d} / {failed:d} | `{command}` |"
               for name, (ran, ok, failed, command) in tallies.items()),
-            f'| Requirements total / traced to a test or inspection | {summary["requirements"]:d} / '
-            f'{summary["traced"]:d} | `python -B tools/check_trace.py` |',
+            (f'| Requirements total / traced to a test or inspection | {summary["requirements"]:d} / '
+            f'{summary["traced"]:d} | `python -B tools/check_trace.py` |'),
             f"| Untested behaviour gaps | {len(gaps):d} | count of `GAP-REF-` IDs in the SRS |",
             f"| TBD markers in the SRS | {tbd:d} | count of `TBD` in the SRS |",
             "| Requirement changes since previous tag | no previous tag | `git tag --list` |"]
@@ -225,9 +225,9 @@ def write_str(label, commit, dirty, today, runs, trace, gates):
     line_counts = ", ".join(f"{kind} {count:d}" for kind, count in sorted(lines.items()))
     out.append(f"| Source lines by type (tracked files) | {line_counts} | `git ls-files` + line count |")
     out += ["", "## 6. Rationale for decisions", "",
-            "The report is generated from a local run on the operator's machine with the same commands CI runs. "
+            ("The report is generated from a local run on the operator's machine with the same commands CI runs. "
             "CI results for the same commit are on the pull request's checks page. Coverage is not measured because "
-            "the project is standard-library only and no coverage tool is pinned."]
+            "the project is standard-library only and no coverage tool is pinned.")]
     out += footer(today, commit, "Generated test report")
     (REPORTS / f"STR-{label}.md").write_text("\n".join(out) + "\n")
     return passed
@@ -252,23 +252,23 @@ def write_vdd(label, commit, today):
             f'| Tag | {label if label != "unreleased" else "none (unreleased main)"} |',
             f"| Commit | `{commit}` |", f'| Previous tag | {previous or "none"} |', f"| Date | {today} |", "",
             "## 2. Contents", "",
-            "Source tree only. There is no built package and no installer. Files covered by `SOURCE-MANIFEST.json` "
-            "by top-level path:", "", "| Path | Files |", "|---|---|"]
+            ("Source tree only. There is no built package and no installer. Files covered by `SOURCE-MANIFEST.json` "
+            "by top-level path:"), "", "| Path | Files |", "|---|---|"]
     out += [f"| `{top}` | {count:d} |" for top, count in sorted(groups.items())]
     out += ["", "No third-party code is vendored. The runtime uses the Python standard library only.", "",
             "## 3. Build and install", "", "```sh",
             "git clone https://github.com/Akilleez-QA/foundation-refrigeration", "cd foundation-refrigeration",
             f"git checkout {commit}", "python -B -m unittest discover -s tests -t .",
             "python -B tools/build_manifest.py", "git diff --exit-code SOURCE-MANIFEST.json", "```", "",
-            "Requires Python 3.11 or newer (CI uses 3.12). Start the bridge with "
-            "`python -B -m foundation_refrigeration_bridge` from the repository root.", "",
+            ("Requires Python 3.11 or newer (CI uses 3.12). Start the bridge with "
+            "`python -B -m foundation_refrigeration_bridge` from the repository root."), "",
             "## 4. Integrity", "", "| Item | Value |", "|---|---|",
             f"| `SOURCE-MANIFEST.json` SHA-256 | `{hashlib.sha256(manifest_raw).hexdigest()}` |",
             f'| Manifest file count | {len(manifest["files"]):d} |',
             f"| Canonical tool inventory SHA-256 | `{hashlib.sha256(inventory).hexdigest()}` |", "",
-            "These are the three values a host pins (see the [interface control document](../icd/icd-cstack.md)). "
+            ("These are the three values a host pins (see the [interface control document](../icd/icd-cstack.md)). "
             "Per-file digests are in `SOURCE-MANIFEST.json`; data-file digests are in the "
-            "[reference data provenance](../data/reference-data.md) table.", "",
+            "[reference data provenance](../data/reference-data.md) table."), "",
             "## 5. Changes since previous tag", "",
             "No previous tag exists, so this lists every first-parent commit up to the identified commit:" if not
             previous else f"First-parent commits since `{previous}`:", "", "```"]
@@ -282,11 +282,11 @@ def write_vdd(label, commit, today):
         out.append(f"Open issues at generation: {len(open_items):d} (`gh issue list --state open`).")
     out += ["", "## 7. Documentation baseline", "", "| Document | Baseline commit |", "|---|---|"]
     for name in CONTROL_DOCS:
-        match = re.search(r"^\| Baseline commit \| (\S+) \|$", (ROOT / name).read_text(), re.M)
+        match = re.search(r"^\| Baseline commit \| (\S+) \|$", (ROOT / name).read_text(), re.MULTILINE)
         out.append(f'| [{name}](../../{name}) | {match.group(1) if match else "not recorded"} |')
     out += ["", "## 8. Verification and scans", "",
-            f"Test and trace results for this commit: [STR-{label}](../verification/reports/STR-{label}.md). "
-            "The secret scan result is recorded in the same report's test log."]
+            (f"Test and trace results for this commit: [STR-{label}](../verification/reports/STR-{label}.md). "
+            "The secret scan result is recorded in the same report's test log.")]
     out += footer(today, commit, "Generated version description")
     (RELEASES / f"VDD-{label}.md").write_text("\n".join(out) + "\n")
 
@@ -295,7 +295,7 @@ def gitleaks_gate():
     if shutil.which("gitleaks") is None:
         return ("gitleaks", "not run", "gitleaks not installed")
     proc = subprocess.run(["gitleaks", "git", "--redact", "--no-banner", "--exit-code", "1", "--config",
-                           ".gitleaks.toml", "."], cwd=ROOT, capture_output=True, text=True)
+                           ".gitleaks.toml", "."], check=False, cwd=ROOT, capture_output=True, text=True)
     summary = re.sub(r"\x1b\[[0-9;]*m", "", proc.stdout + proc.stderr).strip().splitlines()
     return ("`gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .`",
             "passed" if proc.returncode == 0 else "failed",
@@ -312,10 +312,10 @@ def main():
     dirty = bool(git("status", "--porcelain"))
     today = datetime.date.today().isoformat()
     runs = (run_suite(False), run_suite(True))
-    manifest = subprocess.run([sys.executable, "-B", "tools/build_manifest.py"], cwd=ROOT, capture_output=True,
+    manifest = subprocess.run([sys.executable, "-B", "tools/build_manifest.py"], check=False, cwd=ROOT, capture_output=True,
                               text=True)
-    diff = subprocess.run(["git", "diff", "--exit-code", "--quiet", "SOURCE-MANIFEST.json"], cwd=ROOT)
-    docs = subprocess.run([sys.executable, "-B", "tools/gen_docs.py", "--check"], cwd=ROOT, capture_output=True)
+    diff = subprocess.run(["git", "diff", "--exit-code", "--quiet", "SOURCE-MANIFEST.json"], check=False, cwd=ROOT)
+    docs = subprocess.run([sys.executable, "-B", "tools/gen_docs.py", "--check"], check=False, cwd=ROOT, capture_output=True)
     gates = [("`python -B tools/build_manifest.py` then `git diff --exit-code SOURCE-MANIFEST.json`",
               "passed" if manifest.returncode == 0 and diff.returncode == 0 else "failed",
               f"exit {manifest.returncode:d} / {diff.returncode:d}"),

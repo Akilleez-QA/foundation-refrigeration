@@ -4,7 +4,6 @@ from pathlib import Path
 
 from . import thermo, units
 
-
 VERSION = "refrigeration-invariants/0"
 RELATION_TOLERANCE = 1e-6
 GOLDEN_ALLOWANCE_K = 0.001

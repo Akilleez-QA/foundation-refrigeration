@@ -2,10 +2,22 @@ import json
 import math
 import unittest
 
-from foundation_refrigeration.evidence import (
-    CitedBasis, Evidence, EvidenceError, GeneratedBasis, LEGACY_STATUS, PolicyBasis, PracticeBasis,
-    evidence_from_dict, from_legacy_basis, from_legacy_verification, is_approved, legacy_status, record_problem)
 from foundation_refrigeration import units
+from foundation_refrigeration.evidence import (
+    LEGACY_STATUS,
+    CitedBasis,
+    Evidence,
+    EvidenceError,
+    GeneratedBasis,
+    PolicyBasis,
+    PracticeBasis,
+    evidence_from_dict,
+    from_legacy_basis,
+    from_legacy_verification,
+    is_approved,
+    legacy_status,
+    record_problem,
+)
 from foundation_refrigeration.projection import stable_json
 from foundation_refrigeration.units import UnitError
 

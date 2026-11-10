@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from pathlib import Path
 import re
+from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 _SEMVER = re.compile(r"\d+\.\d+\.\d+\Z")

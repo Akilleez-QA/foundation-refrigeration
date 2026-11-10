@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import datetime
 import re
+from dataclasses import dataclass
 
 BASIS_KINDS = ("cited", "generated", "policy", "practice")
 STATUSES = ("CHECK", "APPROVED", "DISPUTED")

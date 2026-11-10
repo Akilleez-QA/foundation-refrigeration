@@ -7,6 +7,7 @@ from typing import BinaryIO
 
 from foundation_refrigeration import __version__
 from foundation_refrigeration.tools import TOOL_NAMES, run
+
 from .schemas import tool_definitions
 
 PROTOCOL = "foundation-refrigeration-jsonrpc/1"
@@ -134,48 +135,57 @@ class Bridge:
         if "id" not in message:
             return None
         try:
-            method, params = message["method"], message.get("params", {})
-            if method == "ping":
-                _exact_object(params, set())
-                result = {}
-            elif method == "initialize":
-                fields = _exact_object(params, {"protocolVersion"})
-                if fields["protocolVersion"] != PROTOCOL:
-                    raise WireError(-32001, "Unsupported bridge protocol; expected " + PROTOCOL + " (not MCP)")
-                if self.initialized:
-                    raise WireError(-32000, "Bridge already initialized")
-                self.initialized = True
-                result = {"protocolVersion": PROTOCOL,
-                          "serverInfo": {"name": "foundation-refrigeration-jsonrpc-bridge", "version": __version__},
-                          "capabilities": {"tools": True}, "mcpCompatible": False,
-                          "limits": {"inputFrameBytes": MAX_FRAME_BYTES, "outputFrameBytes": MAX_OUTPUT_BYTES,
-                                     "jsonDepth": MAX_JSON_DEPTH, "jsonNodes": MAX_JSON_NODES,
-                                     "stringCharacters": MAX_STRING_CHARS, "numberCharacters": MAX_NUMBER_CHARS,
-                                     "idCharacters": MAX_ID_CHARS, "idIntegerAbsoluteValue": MAX_ID_INTEGER},
-                          "numericProfile": "finite decimal literals with explicit units; no exponent, NaN or Infinity",
-                          "methods": ["initialize", "ping", "tools/list", "tools/call"],
-                          "execution": "sequential, request-only; close stdin to stop; no cancellation, batches, "
-                                       "MCP, control actions or determinations"}
-            elif method not in ("tools/list", "tools/call"):
-                raise WireError(-32601, "Method not found")
-            elif not self.initialized:
-                raise WireError(-32000, "Initialize the bridge before using tools")
-            elif method == "tools/list":
-                _exact_object(params, set())
-                result = {"tools": tool_definitions()}
-            else:
-                fields = _exact_object(params, {"name", "arguments"})
-                name, arguments = fields["name"], fields["arguments"]
-                if type(name) is not str or name not in TOOL_NAMES:
-                    raise WireError(-32602, "Unknown refrigeration tool")
-                if type(arguments) is not dict:
-                    raise WireError(-32602, "Tool arguments must be a JSON object")
-                result = _tool_result(name, arguments)
-            return {"jsonrpc": "2.0", "id": identifier, "result": result}
+            result = self._guarded_result(message["method"], message.get("params", {}))
         except WireError as error:
             return _error(identifier, error.code, str(error))
-        except Exception:
-            return _error(identifier, -32603, "Internal bridge error; no evidence result is available")
+        return {"jsonrpc": "2.0", "id": identifier, "result": result}
+
+    def _guarded_result(self, method, params):
+        try:
+            return self._method_result(method, params)
+        except WireError:
+            raise
+        except Exception as error:
+            raise WireError(-32603, "Internal bridge error; no evidence result is available") from error
+
+    def _method_result(self, method, params):
+        if method == "ping":
+            _exact_object(params, set())
+            result = {}
+        elif method == "initialize":
+            fields = _exact_object(params, {"protocolVersion"})
+            if fields["protocolVersion"] != PROTOCOL:
+                raise WireError(-32001, "Unsupported bridge protocol; expected " + PROTOCOL + " (not MCP)")
+            if self.initialized:
+                raise WireError(-32000, "Bridge already initialized")
+            self.initialized = True
+            result = {"protocolVersion": PROTOCOL,
+                      "serverInfo": {"name": "foundation-refrigeration-jsonrpc-bridge", "version": __version__},
+                      "capabilities": {"tools": True}, "mcpCompatible": False,
+                      "limits": {"inputFrameBytes": MAX_FRAME_BYTES, "outputFrameBytes": MAX_OUTPUT_BYTES,
+                                 "jsonDepth": MAX_JSON_DEPTH, "jsonNodes": MAX_JSON_NODES,
+                                 "stringCharacters": MAX_STRING_CHARS, "numberCharacters": MAX_NUMBER_CHARS,
+                                 "idCharacters": MAX_ID_CHARS, "idIntegerAbsoluteValue": MAX_ID_INTEGER},
+                      "numericProfile": "finite decimal literals with explicit units; no exponent, NaN or Infinity",
+                      "methods": ["initialize", "ping", "tools/list", "tools/call"],
+                      "execution": "sequential, request-only; close stdin to stop; no cancellation, batches, "
+                                   "MCP, control actions or determinations"}
+        elif method not in ("tools/list", "tools/call"):
+            raise WireError(-32601, "Method not found")
+        elif not self.initialized:
+            raise WireError(-32000, "Initialize the bridge before using tools")
+        elif method == "tools/list":
+            _exact_object(params, set())
+            result = {"tools": tool_definitions()}
+        else:
+            fields = _exact_object(params, {"name", "arguments"})
+            name, arguments = fields["name"], fields["arguments"]
+            if type(name) is not str or name not in TOOL_NAMES:
+                raise WireError(-32602, "Unknown refrigeration tool")
+            if type(arguments) is not dict:
+                raise WireError(-32602, "Tool arguments must be a JSON object")
+            result = _tool_result(name, arguments)
+        return result
 
     def handle(self, data):
         try:

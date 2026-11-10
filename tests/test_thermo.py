@@ -1,12 +1,16 @@
 import ast
 import json
+import unittest
 from itertools import pairwise
 from pathlib import Path
-import unittest
 
 from foundation_refrigeration import thermo, units
 from foundation_refrigeration.projection import DATA_DIR
-from foundation_refrigeration.thermo import ThermoError, saturation_pressure_kpa, saturation_temperature_c
+from foundation_refrigeration.thermo import (
+    ThermoError,
+    saturation_pressure_kpa,
+    saturation_temperature_c,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 GOLDEN_GEN = json.loads((ROOT / "golden/generator-golden-points.json").read_text())
